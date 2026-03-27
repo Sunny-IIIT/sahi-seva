@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Worker {
+  id              String   @id @default(cuid())
+  name            String
+  phone           String   @unique
+  area            String?
+  category        String
+  priceRate       String?   // E.g., "₹300/visit"
+  trustScore      Int      @default(80)
+  isProfilePublic Boolean  @default(true) // Toggle ON/OFF
+  aadhaarToken    String?   // Secure token reference
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  jobsDone        Int      @default(0)
+  avgRating       Float    @default(0.0)
+  
+  bookings        Booking[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String?
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt         DateTime  @updatedAt
+  trustPassExpiry   DateTime?
+  
+  bookings  Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  customerId String
+  workerId   String
+  status     String   @default("PENDING") // PENDING, ACCEPTED, COMPLETED, CANCELLED
+  amount     Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  worker     Worker   @relation(fields: [workerId], references: [id])
+}
