@@ -1,12 +1,7 @@
-const nextConfig = {
-  // Vercel ko bol rahe hain ki ESLint errors ignore kare
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // Vercel ko bol rahe hain ki TypeScript errors ignore kare
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  /* config options here */
 };
 
 export default nextConfig;
