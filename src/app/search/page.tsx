@@ -1,14 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkerCard } from "@/components/WorkerCard";
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  
+
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +56,7 @@ export default function SearchPage() {
         ) : workers.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
             {workers.map(worker => (
-              <WorkerCard 
+              <WorkerCard
                 key={worker.id}
                 worker={worker}
                 hasTrustPass={false} // Demo mode
@@ -80,5 +80,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>Loading search...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
