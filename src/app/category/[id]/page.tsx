@@ -23,6 +23,16 @@ export default function CategoryPage() {
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
+    // Fetch real status from database
+    fetch('/api/customer/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setHasTrustPass(data.hasTrustPass);
+        }
+      })
+      .catch(err => console.error("Status fetch failed", err));
+
     if (category) {
       setLoading(true);
       fetch(`/api/workers?category=${id}`)
@@ -37,9 +47,11 @@ export default function CategoryPage() {
     }
   }, [category, id]);
 
-  const simulatePayment = () => {
-    setPaying(true);
-    setTimeout(() => { setHasTrustPass(true); setShowPaymentModal(false); setPaying(false); }, 1500);
+  const handlePaymentSuccess = () => {
+    setPaying(false);
+    setShowPaymentModal(false);
+    setHasTrustPass(true);
+    alert("Payment Successful! Trust Pass Activated");
   };
 
   if (!category) {
@@ -181,12 +193,7 @@ export default function CategoryPage() {
         <PaymentModal 
           price={20}
           onClose={() => { setPaying(false); setShowPaymentModal(false); }}
-          onSuccess={() => {
-            setPaying(false);
-            setShowPaymentModal(false);
-            setHasTrustPass(true);
-            alert("Payment Successful! Trust Pass Activated");
-          }}
+          onSuccess={handlePaymentSuccess}
         />
       )}
     </>

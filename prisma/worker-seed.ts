@@ -3,9 +3,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const categories = [
-  "Maids", "Plumbers", "Electricians", "Drivers", "Carpenters", 
-  "Gardeners", "Painters", "Guards", "AC Mechanic", 
-  "Laundry Services", "Pest Control", "Beauticians", "Mechanics", "Cooks", "Nannies"
+  "Maids", "Cooks", "Plumbers", "Electricians", "Carpenters", 
+  "Painters", "Drivers", "Mechanics", "Gardeners", "Guards", 
+  "Nannies", "Nurses", "Delivery", "Loaders", "Tailors", 
+  "Beauticians", "Masons", "Welders", "Cleaners", "Pest Control"
 ];
 
 const areas = [
@@ -46,12 +47,12 @@ async function main() {
 
   const workersToAdd = [];
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 500; i++) {
     const name = names[i % names.length] + (i >= names.length ? ` ${Math.floor(i / names.length)}` : "");
     const phone = `9${Math.floor(Math.random() * 900000000 + 100000000).toString()}`;
     const category = categories[Math.floor(Math.random() * categories.length)];
     const area = areas[Math.floor(Math.random() * areas.length)];
-    const status = "APPROVED"; // Set all to approved for easy testing
+    const status = "APPROVED"; 
     const trustScore = Math.floor(Math.random() * 21) + 80; // 80-100
     const jobsDone = Math.floor(Math.random() * 101); // 0-100
     const avgRating = parseFloat((Math.random() * 2 + 3).toFixed(1)); // 3.0-5.0

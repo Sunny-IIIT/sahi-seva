@@ -40,7 +40,11 @@ export async function POST(req: Request) {
       data: { trustPassExpiry: expiryDate }
     });
 
-    return NextResponse.json({ success: true, message: 'Trust Pass Activated' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Trust Pass Activated',
+      expiry: expiryDate
+    });
 
   } catch (error) {
     console.error('Payment Mock Verification Error:', error);

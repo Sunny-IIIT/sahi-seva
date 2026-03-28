@@ -26,6 +26,14 @@ export async function GET(request: Request) {
         "9": "Gardeners",
         "10": "Guards",
         "11": "Nannies",
+        "12": "Nurses",
+        "13": "Delivery",
+        "14": "Loaders",
+        "15": "Tailors",
+        "16": "Beauticians",
+        "17": "Masons",
+        "18": "Welders",
+        "19": "Cleaners",
         "20": "Pest Control"
       };
       
