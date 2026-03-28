@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CATEGORIES, MOCK_WORKERS, MOCK_CUSTOMER } from "@/lib/mock";
+import { CATEGORIES, MOCK_CUSTOMER } from "@/lib/mock";
 import { WorkerCard } from "@/components/WorkerCard";
 import { PaymentModal } from "@/components/PaymentModal";
 import { CheckCircle2, LockKeyhole, MapPin, Users, Star, ArrowLeft } from "lucide-react";
@@ -13,13 +13,29 @@ export default function CategoryPage() {
   const id = params.id as string;
 
   const category = CATEGORIES.find(c => c.id === id);
-  const workers = MOCK_WORKERS.filter(w => w.category === category?.name);
-
+  
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [hasTrustPass, setHasTrustPass] = useState(
     new Date(MOCK_CUSTOMER.trust_pass_expiry) > new Date()
   );
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    if (category) {
+      setLoading(true);
+      fetch(`/api/workers?category=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setWorkers(data.workers);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [category, id]);
 
   const simulatePayment = () => {
     setPaying(true);
@@ -57,7 +73,7 @@ export default function CategoryPage() {
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Users size={13} /> {workers.length} professionals found
+                  <Users size={13} /> {loading ? '...' : workers.length} professionals found
                 </span>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 5 }}>
                   <MapPin size={13} /> Pan India
@@ -91,7 +107,9 @@ export default function CategoryPage() {
       {/* Workers grid */}
       <div style={{ background: '#f8fafc', minHeight: '60vh', padding: '40px 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          {workers.length > 0 ? (
+          {loading ? (
+             <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>Loading {category.name}...</div>
+          ) : workers.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
               {workers.map(worker => (
                 <WorkerCard
