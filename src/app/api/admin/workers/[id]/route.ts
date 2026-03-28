@@ -5,9 +5,10 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET || 'sahiseva-admin-secret';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
     
@@ -22,7 +23,7 @@ export async function PUT(
     }
 
     const worker = await prisma.worker.update({
-      where: { id: params.id },
+      where: { id },
       data: { status }
     });
 

@@ -9,7 +9,7 @@ async function check() {
   } catch (error: any) {
     console.error(`DB_ERROR=${error.message}`);
   } finally {
-    await prisma.\$disconnect();
+    await prisma.$disconnect();
   }
 }
 
