@@ -9,11 +9,11 @@ export async function GET() {
     const masked = isSet ? `${envVar?.split('@')[1] || 'URL exists but is malformed'}` : 'NOT SET';
 
     // Try a simple connection check
-    await prisma.\$connect();
+    await prisma.$connect();
     const count = await prisma.worker.count();
-    
-    return NextResponse.json({ 
-      status: 'Connection Successful', 
+
+    return NextResponse.json({
+      status: 'Connection Successful',
       dbUrlPresent: isSet,
       dbUrlDomain: masked,
       workerCount: count
@@ -21,8 +21,8 @@ export async function GET() {
 
   } catch (error: any) {
     console.error('Debug API Error:', error);
-    return NextResponse.json({ 
-      status: 'Connection Failed', 
+    return NextResponse.json({
+      status: 'Connection Failed',
       error: error.message || 'Unknown Error',
       stack: error.stack,
       dbUrlPresent: !!process.env.DATABASE_URL
