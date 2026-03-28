@@ -7,23 +7,25 @@ export async function GET(request: Request) {
     const query = searchParams.get('q') || '';
     
     // In SQLite, case-insensitive search involves `contains`
-    const workers = await prisma.worker.findMany({
+    const workersFromDb = await prisma.worker.findMany({
       where: {
         isProfilePublic: true, // Only show public profiles
         status: 'APPROVED', // Only show verified workers
         OR: [
-          { name: { contains: query } },
-          { category: { contains: query } },
-          { area: { contains: query } }
+          { name: { contains: query, mode: 'insensitive' } },
+          { category: { contains: query, mode: 'insensitive' } },
+          { area: { contains: query, mode: 'insensitive' } }
         ]
       },
       select: {
         id: true,
         name: true,
+        phone: true,
+        area: true,
         category: true,
         priceRate: true,
         trustScore: true,
-        verified: true,
+        status: true,
         jobsDone: true,
         avgRating: true
       },
@@ -31,6 +33,20 @@ export async function GET(request: Request) {
         trustScore: 'desc'
       }
     });
+
+    // Map database models to UI component props
+    const workers = workersFromDb.map(w => ({
+      id: w.id,
+      name: w.name,
+      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=random&color=fff&rounded=true`,
+      category: w.category,
+      trust_score: w.trustScore,
+      verified: w.status === 'APPROVED',
+      phone_number: w.phone,
+      price: w.priceRate || 'Price on request',
+      ratings: w.avgRating,
+      profile_views: Math.floor(w.jobsDone * 3.5) + 12 // Simulated views
+    }));
 
     return NextResponse.json({ success: true, workers });
   } catch (error) {
