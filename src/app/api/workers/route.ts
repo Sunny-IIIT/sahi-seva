@@ -67,6 +67,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, workers });
   } catch (error) {
     console.error('Fetch Workers Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch workers' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch workers', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
