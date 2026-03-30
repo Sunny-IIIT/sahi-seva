@@ -1,7 +1,7 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         "19": "Cleaners",
         "20": "Pest Control"
       };
-      
+
       const categoryName = categoryMap[categoryId];
       if (categoryName) {
         where.category = categoryName;
