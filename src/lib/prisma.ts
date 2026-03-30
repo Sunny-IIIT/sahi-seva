@@ -1,15 +1,20 @@
 import { PrismaClient } from '@prisma/client'
 
-const prismaClientSingleton = () => {
-  return new PrismaClient()
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+// Yeh function kisi bhi hidden 'Enter' ya spaces ko URL se nikaal dega
+const cleanUrl = (url: string | undefined) => {
+  return url ? url.replace(/\s+/g, '').trim() : url;
 }
 
-declare global {
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
-}
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    datasources: {
+      db: {
+        url: cleanUrl(process.env.DATABASE_URL),
+      },
+    },
+  })
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
-
-export default prisma
-
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
