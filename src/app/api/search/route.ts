@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic'; import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
-    
+
     // In SQLite, case-insensitive search involves `contains`
     const workersFromDb = await prisma.worker.findMany({
       where: {
