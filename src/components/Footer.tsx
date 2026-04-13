@@ -29,12 +29,18 @@ export function Footer() {
           <div>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc', marginBottom: 20, letterSpacing: '0.02em' }}>For Customers</h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {["Book a Worker", "Trust Pass", "How it Works", "Safety & Verification", "Customer Reviews"].map(l => (
-                <li key={l}>
-                  <Link href="#" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14, transition: 'color 0.2s' }}
+              {[
+                { label: "Book a Worker", href: "/search" },
+                { label: "Trust Pass", href: "/customer/trust-pass" },
+                { label: "How it Works", href: "/customer/how-it-works" },
+                { label: "Safety & Verification", href: "/customer/safety" },
+                { label: "Customer Reviews", href: "/customer/reviews" }
+              ].map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14, transition: 'color 0.2s' }}
                     onMouseEnter={e => { (e.target as HTMLAnchorElement).style.color = '#fff'; }}
                     onMouseLeave={e => { (e.target as HTMLAnchorElement).style.color = '#94a3b8'; }}>
-                    {l}
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -45,12 +51,18 @@ export function Footer() {
           <div>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc', marginBottom: 20, letterSpacing: '0.02em' }}>For Workers</h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {["Join SahiSeva", "Worker Login", "Worker Benefits", "Background Check", "Training & Support"].map(l => (
-                <li key={l}>
-                  <Link href={l === "Worker Login" ? "/worker/login" : l === "Join SahiSeva" ? "/worker/register" : "#"} style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14, transition: 'color 0.2s' }}
+              {[
+                { label: "Join SahiSeva", href: "/worker/register" },
+                { label: "Worker Login", href: "/worker/login" },
+                { label: "Worker Benefits", href: "/worker/benefits" },
+                { label: "Background Check", href: "/worker/background-check" },
+                { label: "Training & Support", href: "/worker/training" }
+              ].map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 14, transition: 'color 0.2s' }}
                     onMouseEnter={e => { (e.target as HTMLAnchorElement).style.color = '#fff'; }}
                     onMouseLeave={e => { (e.target as HTMLAnchorElement).style.color = '#94a3b8'; }}>
-                    {l}
+                    {link.label}
                   </Link>
                 </li>
               ))}

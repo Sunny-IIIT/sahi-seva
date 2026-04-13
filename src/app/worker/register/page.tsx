@@ -31,7 +31,7 @@ export default function WorkerRegister() {
       const res = await fetch('/api/workers/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, fileToken })
       });
       if (res.ok) {
         router.push('/worker/dashboard');
