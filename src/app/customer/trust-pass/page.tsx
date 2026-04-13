@@ -1,7 +1,5 @@
 import { ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
 
 export function generateMetadata() {
   return { title: 'Trust Pass | SahiSeva' };
@@ -10,7 +8,6 @@ export function generateMetadata() {
 export default function TrustPassPage() {
   return (
     <>
-      <Header />
       <div style={{ minHeight: '80vh', background: '#f8fafc', padding: '60px 24px' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           
@@ -56,7 +53,6 @@ export default function TrustPassPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

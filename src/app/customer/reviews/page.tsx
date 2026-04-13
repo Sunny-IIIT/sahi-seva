@@ -1,6 +1,4 @@
 import { Star } from "lucide-react";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
 
 export function generateMetadata() {
   return { title: 'Customer Reviews | SahiSeva' };
@@ -16,7 +14,6 @@ const reviews = [
 export default function ReviewsPage() {
   return (
     <>
-      <Header />
       <div style={{ minHeight: '80vh', background: '#f8fafc', padding: '80px 24px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           
@@ -48,7 +45,6 @@ export default function ReviewsPage() {
 
         </div>
       </div>
-      <Footer />
     </>
   );
 }

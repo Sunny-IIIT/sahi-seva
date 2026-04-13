@@ -1,7 +1,5 @@
 import { Search, UserCheck, Unlock, PhoneCall } from "lucide-react";
 import Link from "next/link";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
 
 export function generateMetadata() {
   return { title: 'How It Works | SahiSeva' };
@@ -33,7 +31,6 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <>
-      <Header />
       <div style={{ minHeight: '80vh', background: '#f8fafc', padding: '80px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           
@@ -66,7 +63,6 @@ export default function HowItWorksPage() {
           
         </div>
       </div>
-      <Footer />
     </>
   );
 }
