@@ -2,12 +2,13 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '20');
+
+    const VALID_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 
     let where: any = {
       isProfilePublic: true,

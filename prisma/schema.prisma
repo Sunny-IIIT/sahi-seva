@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Worker status valid values: "PENDING" | "APPROVED" | "REJECTED"
+// Booking status valid values: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+// These are enforced at the application layer (API validation) since Supabase
+// free tier does not support ALTER TABLE ... ALTER COLUMN TYPE via the pooler.
+
 model Worker {
   id              String    @id @default(cuid())
   name            String
@@ -23,6 +28,10 @@ model Worker {
   jobsDone        Int       @default(0)
   avgRating       Float     @default(0.0)
   bookings        Booking[]
+
+  @@index([status, isProfilePublic])
+  @@index([status, category])
+  @@index([trustScore(sort: Desc)])
 }
 
 model Customer {
@@ -45,6 +54,9 @@ model Booking {
   updatedAt  DateTime @updatedAt
   customer   Customer @relation(fields: [customerId], references: [id])
   worker     Worker   @relation(fields: [workerId], references: [id])
+
+  @@index([customerId])
+  @@index([workerId])
 }
 
 model VerificationToken {
@@ -55,4 +67,5 @@ model VerificationToken {
   createdAt DateTime @default(now())
 
   @@unique([phone, otp], name: "phone_otp")
+  @@index([phone])
 }
