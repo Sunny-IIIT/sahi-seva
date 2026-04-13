@@ -15,10 +15,16 @@ export function FeaturedWorkers() {
       .then(data => {
         if (data.success) {
           setWorkers(data.workers);
+        } else {
+          // Temporarily alert the error to debug Vercel issue!
+          if (data.error) alert(`API Error (Vercel issue): ${data.details || data.error}`);
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(err => {
+        alert(`Network Error fetching workers: ${err.message}`);
+        setLoading(false);
+      });
   }, []);
 
   if (!loading && workers.length === 0) return null;
