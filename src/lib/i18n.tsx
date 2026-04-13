@@ -316,7 +316,20 @@ const translations = {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("EN");
+  const [lang, setLangState] = useState<Lang>("EN");
+
+  // Read saved language from localStorage on mount (client-side only)
+  React.useEffect(() => {
+    const saved = localStorage.getItem('sahiseva_lang') as Lang | null;
+    if (saved && ['EN', 'HI', 'GU'].includes(saved)) {
+      setLangState(saved);
+    }
+  }, []);
+
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    localStorage.setItem('sahiseva_lang', l);
+  };
 
   const t = (key: string): string => {
     // @ts-ignore

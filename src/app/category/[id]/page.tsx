@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { CATEGORIES, MOCK_CUSTOMER } from "@/lib/mock";
 import { WorkerCard } from "@/components/WorkerCard";
 import { PaymentModal } from "@/components/PaymentModal";
-import { CheckCircle2, LockKeyhole, MapPin, Users, Star, ArrowLeft } from "lucide-react";
+import { CheckCircle2, LockKeyhole, MapPin, Users, Star, ArrowLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function CategoryPage() {
@@ -16,6 +16,8 @@ export default function CategoryPage() {
   
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successBanner, setSuccessBanner] = useState(false);
   const [hasTrustPass, setHasTrustPass] = useState(
     new Date(MOCK_CUSTOMER.trust_pass_expiry) > new Date()
   );
@@ -23,27 +25,32 @@ export default function CategoryPage() {
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    // Fetch real status from database
+    // Fetch customer trust pass status
     fetch('/api/customer/status')
       .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setHasTrustPass(data.hasTrustPass);
-        }
-      })
-      .catch(err => console.error("Status fetch failed", err));
+      .then(data => { if (data.success) setHasTrustPass(data.hasTrustPass); })
+      .catch(() => { /* Not logged in — keep default false */ });
 
     if (category) {
       setLoading(true);
+      setError(null);
       fetch(`/api/workers?category=${id}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+          return res.json();
+        })
         .then(data => {
           if (data.success) {
             setWorkers(data.workers);
+          } else {
+            setError(data.error || 'Failed to load workers. Please refresh.');
           }
           setLoading(false);
         })
-        .catch(() => setLoading(false));
+        .catch(err => {
+          setError('Could not reach the server. Check your connection and try again.');
+          setLoading(false);
+        });
     }
   }, [category, id]);
 
@@ -51,7 +58,8 @@ export default function CategoryPage() {
     setPaying(false);
     setShowPaymentModal(false);
     setHasTrustPass(true);
-    alert("Payment Successful! Trust Pass Activated");
+    setSuccessBanner(true);
+    setTimeout(() => setSuccessBanner(false), 4000);
   };
 
   if (!category) {
@@ -116,11 +124,30 @@ export default function CategoryPage() {
         </div>
       )}
 
+      {/* Success banner */}
+      {successBanner && (
+        <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '14px 24px' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckCircle2 size={16} color="#16a34a" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#15803d' }}>✅ Trust Pass Activated! You can now view all contact details.</span>
+          </div>
+        </div>
+      )}
+
       {/* Workers grid */}
       <div style={{ background: '#f8fafc', minHeight: '60vh', padding: '40px 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          {loading ? (
-             <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>Loading {category.name}...</div>
+          {error ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: '16px 20px', color: '#9a3412' }}>
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
+            </div>
+          ) : loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ height: 280, background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', borderRadius: 18, animation: 'shimmer 1.5s infinite' }} />
+              ))}
+            </div>
           ) : workers.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
               {workers.map(worker => (
@@ -148,6 +175,12 @@ export default function CategoryPage() {
           )}
         </div>
       </div>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
 
       {/* Info Modal */}
       {showPaymentModal && !paying && (
