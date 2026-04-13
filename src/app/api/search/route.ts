@@ -23,7 +23,6 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
-        phone: true,
         area: true,
         category: true,
         priceRate: true,
@@ -45,7 +44,7 @@ export async function GET(request: Request) {
       category: w.category,
       trust_score: w.trustScore,
       verified: w.status === 'APPROVED',
-      phone_number: w.phone,
+      phone_number: null,
       price: w.priceRate || 'Price on request',
       ratings: w.avgRating,
       profile_views: Math.floor(w.jobsDone * 3.5) + 12 // Simulated views

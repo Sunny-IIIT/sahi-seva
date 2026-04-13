@@ -24,16 +24,35 @@ export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCard
   const [showPayment, setShowPayment] = useState(false);
   const [unlockedPhone, setUnlockedPhone] = useState<string | null>(null);
 
+  const [isLoadingPhone, setIsLoadingPhone] = useState(false);
+
   const handleUnlock = () => {
     setShowPayment(true);
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setShowPayment(false);
-    setUnlockedPhone(worker.phone_number);
+    setIsLoadingPhone(true);
+    try {
+      const res = await fetch('/api/workers/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workerId: worker.id })
+      });
+      const data = await res.json();
+      if (data.success && data.phone) {
+        setUnlockedPhone(data.phone);
+      } else {
+        alert('Failed to fetch contact details.');
+      }
+    } catch(err) {
+      alert('Network error while unlocking contact.');
+    } finally {
+      setIsLoadingPhone(false);
+    }
   };
 
-  const displayPhone = hasTrustPass ? worker.phone_number : "XXXXX XXXXX";
+  const displayPhone = worker.phone_number || unlockedPhone || "XXXXX XXXXX";
 
   return (
     <div
@@ -102,7 +121,7 @@ export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCard
         </div>
 
         {/* CTA button */}
-        {hasTrustPass ? (
+        {hasTrustPass && worker.phone_number ? (
           <a href={`tel:${worker.phone_number}`}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '12px', background: '#16a34a', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none', boxShadow: '0 4px 12px rgba(22,163,74,0.25)' }}>
             <Phone size={15} /> Call: +91 {displayPhone}
@@ -114,8 +133,8 @@ export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCard
               <Phone size={18} /> {unlockedPhone}
             </a>
           ) : (
-            <button onClick={onUnlockContact || handleUnlock} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0f172a', color: '#fff', borderRadius: 8, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', transition: 'background 0.2s' }}>
-              <Phone size={18} /> Unlock Contact
+            <button disabled={isLoadingPhone} onClick={onUnlockContact || handleUnlock} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0f172a', color: '#fff', borderRadius: 8, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: isLoadingPhone ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.2s', opacity: isLoadingPhone ? 0.7 : 1 }}>
+              <Phone size={18} /> {isLoadingPhone ? 'Unlocking...' : 'Unlock Contact'}
             </button>
           )
         )}

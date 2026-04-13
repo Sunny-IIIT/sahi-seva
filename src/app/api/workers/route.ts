@@ -48,6 +48,16 @@ export async function GET(request: Request) {
     const workersFromDb = await prisma.worker.findMany({
       where,
       take: limit,
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        trustScore: true,
+        status: true,
+        priceRate: true,
+        avgRating: true,
+        jobsDone: true
+      },
       orderBy: {
         trustScore: 'desc'
       }
@@ -60,7 +70,7 @@ export async function GET(request: Request) {
       category: w.category,
       trust_score: w.trustScore,
       verified: w.status === 'APPROVED',
-      phone_number: w.phone,
+      phone_number: null, 
       price: w.priceRate || 'Price on request',
       ratings: w.avgRating,
       profile_views: Math.floor(w.jobsDone * 3.5) + 12

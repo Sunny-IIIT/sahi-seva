@@ -6,8 +6,9 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    if (!data.phone || data.phone.length > 15 || !data.name || data.name.length > 50 || !data.category) {
-      return NextResponse.json({ error: 'Invalid input data or length exceeded' }, { status: 400 });
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!data.phone || !phoneRegex.test(data.phone.trim()) || !data.name || data.name.length > 50 || !data.category) {
+      return NextResponse.json({ error: 'Invalid input. Phone must be a valid 10-digit Indian mobile number.' }, { status: 400 });
     }
 
     if (!data.fileToken || data.fileToken.length > 255) {
