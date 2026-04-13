@@ -43,7 +43,7 @@ export default function HowItWorksPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, marginBottom: 60 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 32, marginBottom: 60 }}>
             {steps.map((step, idx) => (
               <div key={idx} style={{ background: '#fff', padding: '40px 32px', borderRadius: 24, boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #f1f5f9' }}>
                 <div style={{ width: 80, height: 80, borderRadius: 24, background: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>

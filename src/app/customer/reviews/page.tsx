@@ -26,7 +26,7 @@ export default function ReviewsPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24, marginBottom: 60 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24, marginBottom: 60 }}>
             {reviews.map((review, idx) => (
               <div key={idx} style={{ background: '#fff', padding: '32px', borderRadius: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 16, color: '#eab308' }}>
