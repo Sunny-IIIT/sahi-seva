@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { WorkerCard } from "./WorkerCard";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 
 export function FeaturedWorkers() {
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/workers?limit=4')
@@ -16,18 +17,18 @@ export function FeaturedWorkers() {
         if (data.success) {
           setWorkers(data.workers);
         } else {
-          // Temporarily alert the error to debug Vercel issue!
-          if (data.error) alert(`API Error (Vercel issue): ${data.details || data.error}`);
+          setError(data.error || 'Failed to load workers');
         }
         setLoading(false);
       })
       .catch(err => {
-        alert(`Network Error fetching workers: ${err.message}`);
+        setError('Could not connect to database. Please try again.');
         setLoading(false);
       });
   }, []);
 
-  if (!loading && workers.length === 0) return null;
+  // Show nothing silently only on success with 0 workers — show error if fetch failed
+  if (!loading && !error && workers.length === 0) return null;
 
   return (
     <section style={{ padding: '80px 24px', background: '#fff' }}>
@@ -46,16 +47,21 @@ export function FeaturedWorkers() {
           </Link>
         </div>
 
-        {loading ? (
+        {error ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: '16px 20px', color: '#9a3412' }}>
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
+          </div>
+        ) : loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
             {[1, 2, 3, 4].map(i => (
-              <div key={i} style={{ height: 320, background: '#f8fafc', borderRadius: 18, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              <div key={i} style={{ height: 320, background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', borderRadius: 18, animation: 'shimmer 1.5s infinite' }} />
             ))}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
             {workers.map(worker => (
-              <WorkerCard 
+              <WorkerCard
                 key={worker.id}
                 worker={worker}
                 hasTrustPass={false}
@@ -65,12 +71,13 @@ export function FeaturedWorkers() {
           </div>
         )}
       </div>
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
       `}</style>
     </section>
   );
 }
+
