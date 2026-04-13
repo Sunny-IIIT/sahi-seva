@@ -63,7 +63,7 @@ export function Footer() {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <li style={{ display: 'flex', gap: 10, color: '#94a3b8', fontSize: 14 }}>
                 <Phone size={18} color="#4f46e5" style={{ flexShrink: 0 }} /> 
-                <span style={{ paddingTop: 1 }}>1800-123-4567 <span style={{ display: 'block', fontSize: 12, color: '#64748b', marginTop: 3 }}>(9AM - 8PM, Mon-Sat)</span></span>
+                <span style={{ paddingTop: 1 }}>+91 7820030487 <span style={{ display: 'block', fontSize: 12, color: '#64748b', marginTop: 3 }}>(9AM - 8PM, Mon-Sat)</span></span>
               </li>
               <li style={{ display: 'flex', gap: 10, color: '#94a3b8', fontSize: 14 }}>
                 <Mail size={18} color="#4f46e5" style={{ flexShrink: 0 }} /> 
@@ -72,7 +72,7 @@ export function Footer() {
               <li style={{ display: 'flex', gap: 10, color: '#94a3b8', fontSize: 14 }}>
                 <MapPin size={18} color="#4f46e5" style={{ flexShrink: 0 }} /> 
                 <span style={{ paddingTop: 1, lineHeight: 1.5 }}>
-                  Sector 14, Gurugram,<br />Haryana 122001, India
+                  Dhanoli, Agra,<br />Uttar Pradesh
                 </span>
               </li>
             </ul>
