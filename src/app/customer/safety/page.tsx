@@ -1,7 +1,7 @@
 import { Shrub, FileCheck, Lock, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
-import { Navbar } from "@/components/Navbar";
+import { Header } from "@/components/Header";
 
 export function generateMetadata() {
   return { title: 'Safety & Verification | SahiSeva' };
@@ -10,7 +10,7 @@ export function generateMetadata() {
 export default function SafetyPage() {
   return (
     <>
-      <Navbar />
+      <Header />
       <div style={{ minHeight: '80vh', background: '#f8fafc', padding: '80px 24px' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           
