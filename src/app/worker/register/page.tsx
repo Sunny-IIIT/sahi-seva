@@ -14,15 +14,19 @@ export default function WorkerRegister() {
   
   // Aadhaar states
   const [aadhaarVerifying, setAadhaarVerifying] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpVerifying, setOtpVerifying] = useState(false);
   const [aadhaarVerified, setAadhaarVerified] = useState(false);
   const [aadhaarError, setAadhaarError] = useState("");
+  const [aadhaarMessage, setAadhaarMessage] = useState("");
 
   const [uploading, setUploading] = useState(false);
   const [fileToken, setFileToken] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState("");
 
-  const handleVerifyAadhaar = async () => {
+  const handleSendAadhaarOtp = async () => {
     if (formData.aadhaar.length !== 12) {
       setAadhaarError("Aadhaar must be exactly 12 digits");
       return;
@@ -30,21 +34,49 @@ export default function WorkerRegister() {
     setAadhaarVerifying(true);
     setAadhaarError("");
     try {
-      const res = await fetch('/api/auth/verify-aadhaar', {
+      const res = await fetch('/api/auth/aadhaar/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ aadhaarNumber: formData.aadhaar })
       });
+      const data = await res.json();
       if (res.ok) {
-        setAadhaarVerified(true);
+        setOtpSent(true);
+        setAadhaarMessage(data.message);
       } else {
-        const data = await res.json();
-        setAadhaarError(data.error || "Verification failed");
+        setAadhaarError(data.error || "Failed to send OTP");
       }
     } catch {
       setAadhaarError("Network error");
     } finally {
       setAadhaarVerifying(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      setAadhaarError("OTP must be 6 digits");
+      return;
+    }
+    setOtpVerifying(true);
+    setAadhaarError("");
+    try {
+      const res = await fetch('/api/auth/aadhaar/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aadhaarNumber: formData.aadhaar, otp })
+      });
+      if (res.ok) {
+        setAadhaarVerified(true);
+        setAadhaarMessage("");
+      } else {
+        const data = await res.json();
+        setAadhaarError(data.error || "Invalid OTP");
+      }
+    } catch {
+      setAadhaarError("Network error");
+    } finally {
+      setOtpVerifying(false);
     }
   };
 
@@ -153,16 +185,16 @@ export default function WorkerRegister() {
                       type="text" 
                       placeholder="12-digit Aadhaar Number" 
                       value={formData.aadhaar}
-                      disabled={aadhaarVerified}
+                      disabled={otpSent || aadhaarVerified}
                       onChange={e => setFormData({ ...formData, aadhaar: e.target.value.replace(/\D/g, '').slice(0, 12) })}
                       className="input" 
-                      style={{ paddingLeft: 38, width: '100%', borderColor: aadhaarVerified ? '#22c55e' : undefined, background: aadhaarVerified ? '#f0fdf4' : undefined }} 
+                      style={{ paddingLeft: 38, width: '100%', borderColor: aadhaarVerified ? '#22c55e' : undefined, background: (otpSent || aadhaarVerified) ? '#f8fafc' : undefined }} 
                     />
                   </div>
-                  {!aadhaarVerified && (
+                  {!otpSent && !aadhaarVerified && (
                     <button 
                       type="button" 
-                      onClick={handleVerifyAadhaar}
+                      onClick={handleSendAadhaarOtp}
                       disabled={formData.aadhaar.length !== 12 || aadhaarVerifying}
                       style={{ 
                         padding: '0 16px', 
@@ -176,14 +208,54 @@ export default function WorkerRegister() {
                         transition: 'all 0.2s'
                       }}
                     >
-                      {aadhaarVerifying ? 'Verifying...' : 'Verify'}
+                      {aadhaarVerifying ? 'Sending...' : 'Send OTP'}
                     </button>
                   )}
                 </div>
-                {aadhaarError && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{aadhaarError}</p>}
+                
+                {otpSent && !aadhaarVerified && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <input 
+                          type="text" 
+                          placeholder="6-digit OTP (e.g. 123456)" 
+                          value={otp}
+                          onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          className="input" 
+                          style={{ paddingLeft: 12, width: '100%' }} 
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleVerifyOtp}
+                        disabled={otp.length !== 6 || otpVerifying}
+                        style={{ 
+                          padding: '0 16px', 
+                          background: otp.length === 6 && !otpVerifying ? '#4f46e5' : '#e2e8f0', 
+                          color: otp.length === 6 && !otpVerifying ? 'white' : '#94a3b8', 
+                          borderRadius: 10, 
+                          fontWeight: 600, 
+                          fontSize: 14, 
+                          border: 'none', 
+                          cursor: otp.length === 6 && !otpVerifying ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {otpVerifying ? 'Verifying...' : 'Verify OTP'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {aadhaarMessage && !aadhaarError && !aadhaarVerified && (
+                  <p style={{ color: '#16a34a', fontSize: 12, marginTop: 6, fontWeight: 500 }}>{aadhaarMessage}</p>
+                )}
+                {aadhaarError && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 6 }}>{aadhaarError}</p>}
+                
                 {aadhaarVerified && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, color: '#16a34a', fontSize: 13, fontWeight: 600 }}>
-                    <Check size={14} /> Govt. Verified ✓
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, color: '#16a34a', fontSize: 13, fontWeight: 600, background: '#f0fdf4', padding: '8px 12px', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                    <ShieldCheck size={16} /> Govt. Verified ✓
                   </div>
                 )}
               </div>
