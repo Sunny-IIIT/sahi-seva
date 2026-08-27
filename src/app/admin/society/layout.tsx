@@ -29,14 +29,6 @@ export default function SocietyAdminLayout({
               <LayoutDashboard size={18} />
               Overview
             </Link>
-            
-            <Link 
-              href="/admin/society/workers" 
-              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            >
-              <Users size={18} />
-              Worker Directory
-            </Link>
 
             <Link 
               href="#" 

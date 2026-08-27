@@ -10,11 +10,43 @@ export default function WorkerRegister() {
   const { t } = useLanguage();
   const STEPS = [t('reg.step1'), t('reg.step2')];
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ name: "", phone: "", area: "", category: "", price: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", area: "", category: "", price: "", aadhaar: "" });
+  
+  // Aadhaar states
+  const [aadhaarVerifying, setAadhaarVerifying] = useState(false);
+  const [aadhaarVerified, setAadhaarVerified] = useState(false);
+  const [aadhaarError, setAadhaarError] = useState("");
+
   const [uploading, setUploading] = useState(false);
   const [fileToken, setFileToken] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState("");
+
+  const handleVerifyAadhaar = async () => {
+    if (formData.aadhaar.length !== 12) {
+      setAadhaarError("Aadhaar must be exactly 12 digits");
+      return;
+    }
+    setAadhaarVerifying(true);
+    setAadhaarError("");
+    try {
+      const res = await fetch('/api/auth/verify-aadhaar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aadhaarNumber: formData.aadhaar })
+      });
+      if (res.ok) {
+        setAadhaarVerified(true);
+      } else {
+        const data = await res.json();
+        setAadhaarError(data.error || "Verification failed");
+      }
+    } catch {
+      setAadhaarError("Network error");
+    } finally {
+      setAadhaarVerifying(false);
+    }
+  };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
@@ -86,7 +118,14 @@ export default function WorkerRegister() {
           </div>
 
           {step === 1 ? (
-            <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={e => { e.preventDefault(); setStep(2); }}>
+            <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={e => { 
+              e.preventDefault(); 
+              if (!aadhaarVerified) {
+                setAadhaarError("Please verify your Aadhaar first");
+                return;
+              }
+              setStep(2); 
+            }}>
               {[
                 { label: t('reg.fullName'), key: "name", type: "text", ph: "Ramesh Kumar", Icon: UserCircle2 },
                 { label: t('reg.phone'), key: "phone", type: "tel", ph: "9876543210", Icon: Phone },
@@ -103,6 +142,51 @@ export default function WorkerRegister() {
                   </div>
                 </div>
               ))}
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>AADHAAR NUMBER (UIDAI)</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <ShieldCheck size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="12-digit Aadhaar Number" 
+                      value={formData.aadhaar}
+                      disabled={aadhaarVerified}
+                      onChange={e => setFormData({ ...formData, aadhaar: e.target.value.replace(/\D/g, '').slice(0, 12) })}
+                      className="input" 
+                      style={{ paddingLeft: 38, width: '100%', borderColor: aadhaarVerified ? '#22c55e' : undefined, background: aadhaarVerified ? '#f0fdf4' : undefined }} 
+                    />
+                  </div>
+                  {!aadhaarVerified && (
+                    <button 
+                      type="button" 
+                      onClick={handleVerifyAadhaar}
+                      disabled={formData.aadhaar.length !== 12 || aadhaarVerifying}
+                      style={{ 
+                        padding: '0 16px', 
+                        background: formData.aadhaar.length === 12 && !aadhaarVerifying ? '#0f172a' : '#e2e8f0', 
+                        color: formData.aadhaar.length === 12 && !aadhaarVerifying ? 'white' : '#94a3b8', 
+                        borderRadius: 10, 
+                        fontWeight: 600, 
+                        fontSize: 14, 
+                        border: 'none', 
+                        cursor: formData.aadhaar.length === 12 && !aadhaarVerifying ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {aadhaarVerifying ? 'Verifying...' : 'Verify'}
+                    </button>
+                  )}
+                </div>
+                {aadhaarError && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{aadhaarError}</p>}
+                {aadhaarVerified && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, color: '#16a34a', fontSize: 13, fontWeight: 600 }}>
+                    <Check size={14} /> Govt. Verified ✓
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('reg.category')}</label>
