@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, ArrowRight, Shield, Star, CheckCircle, Users, TrendingUp } from "lucide-react";
+import { Search, MapPin, ArrowRight, Shield, Star, CheckCircle, Users, TrendingUp, Mic, MicOff } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 const POPULAR = ["Maids", "Plumbers", "Cooks", "Electricians", "Painters"];
@@ -18,6 +18,10 @@ export function Hero() {
   const [showCat, setShowCat] = useState(false);
   const [showCity, setShowCity] = useState(false);
 
+  // Voice Search states
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
   const catRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +34,32 @@ export function Hero() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recog = new SpeechRecognition();
+      recog.continuous = false;
+      recog.lang = 'hi-IN'; // Works for Hindi and English mix
+      recog.interimResults = false;
+
+      recog.onstart = () => setIsListening(true);
+      recog.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setQuery(transcript);
+        setShowCat(true);
+      };
+      recog.onerror = () => setIsListening(false);
+      recog.onend = () => setIsListening(false);
+      setRecognition(recog);
+    }
+  }, []);
+
+  const toggleListening = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isListening) recognition?.stop();
+    else recognition?.start();
+  };
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -86,6 +116,18 @@ export function Hero() {
                   style={{ background: 'none', border: 'none', outline: 'none', fontSize: 14, color: '#0f172a', width: '100%', fontFamily: 'inherit', fontWeight: 500 }} 
                   autoComplete="off"
                 />
+                {recognition && (
+                  <button onClick={toggleListening} type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+                    {isListening ? (
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ position: 'absolute', height: '100%', width: '100%', borderRadius: '9999px', backgroundColor: '#f87171', opacity: 0.75, animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }}></span>
+                        <Mic size={16} color="#dc2626" style={{ position: 'relative' }} />
+                      </div>
+                    ) : (
+                      <MicOff size={16} color="#94a3b8" />
+                    )}
+                  </button>
+                )}
               </div>
               {/* Category Dropdown */}
               {showCat && query && filteredCats.length > 0 && (
