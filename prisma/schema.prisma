@@ -10,29 +10,18 @@ datasource db {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATUS ENUMERATIONS
-// Enforced at the application layer (API validation) because the Supabase
-// free-tier pooler does not support ALTER COLUMN TYPE migrations.
-//
-// Worker.status      : "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"
-// Booking.status     : "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
-// InsuranceStatus    : "ACTIVE" | "EXPIRED" | "NONE"
-// CertificationType  : "SKILL_INDIA" | "NSDC" | "STATE_BOARD" | "OTHER" | "NONE"
-// Ticket.status      : "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
-// Transaction.status : "PENDING" | "SUCCESS" | "FAILED"
 // ─────────────────────────────────────────────────────────────────────────────
-
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  COOPERATIVE ADMINISTRATION
 // ═════════════════════════════════════════════════════════════════════════════
 
-/// Top-level cooperative federation (e.g., District Cooperative Federation)
 model Federation {
   id          String    @id @default(cuid())
   name        String
   state       String
   district    String
-  regNumber   String    @unique   // Official registration number
+  regNumber   String    @unique
   contactEmail String?
   contactPhone String?
   createdAt   DateTime  @default(now())
@@ -43,15 +32,13 @@ model Federation {
   @@index([state, district])
 }
 
-/// A cooperative society that is a member of a Federation.
-/// Every Worker must belong to exactly one Society.
 model Society {
   id            String    @id @default(cuid())
   name          String
   pinCode       String
   address       String?
   federationId  String
-  adminPhone    String?   // Phone of the society admin / operator
+  adminPhone    String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -62,22 +49,20 @@ model Society {
   @@index([pinCode])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  SERVICE CATEGORY — Fair Wages & Demand Forecasting anchor
+//  SERVICE CATEGORY
 // ═════════════════════════════════════════════════════════════════════════════
 
 model ServiceCategory {
   id          String   @id @default(cuid())
-  name        String   @unique        // e.g. "Plumber", "Maid", "Electrician"
-  baseRate    Float                   // Government-mandated minimum daily wage (₹)
+  name        String   @unique
+  baseRate    Int      // Fixed: Now Int (stored in paise/cents)
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   workers     Worker[]
 }
-
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  WORKER
@@ -86,45 +71,43 @@ model ServiceCategory {
 model Worker {
   id            String    @id @default(cuid())
 
-  // ── Core identity (preserved from v1) ──────────────────────────────────
   name          String
   phone         String    @unique
   area          String?
   priceRate     String?
   trustScore    Int       @default(80)
   isProfilePublic Boolean  @default(true)
-  aadhaarToken  String?
-  status        String    @default("PENDING")   // PENDING | APPROVED | REJECTED | SUSPENDED
+  
+  // Fixed: Added @unique constraint to prevent identity fraud
+  aadhaarToken  String?   @unique
+  
+  status        String    @default("PENDING")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   jobsDone      Int       @default(0)
-  avgRating     Float     @default(0.0)
+  avgRating     Float     @default(0.0) // This stays float for rating
 
-  // ── Cooperative linkage ────────────────────────────────────────────────
   societyId     String?
   society       Society?  @relation(fields: [societyId], references: [id])
 
-  // ── Service category (replaces plain-text category, keeps backwards compat) ─
-  category      String                           // kept for backward compat (search)
+  category      String
   categoryId    String?
   serviceCategory ServiceCategory? @relation(fields: [categoryId], references: [id])
 
-  // ── Skill & Certification (SIH requirement) ────────────────────────────
-  certificationType String  @default("NONE")     // SKILL_INDIA | NSDC | STATE_BOARD | OTHER | NONE
+  certificationType String  @default("NONE")
   isGovtCertified   Boolean @default(false)
-  certificationUrl  String?                      // URL to certificate image/PDF
+  certificationUrl  String?
 
-  // ── Geo-Location (SIH — Geo-Spatial Matching) ─────────────────────────
-  latitude      Float?
+  latitude      Float?    // Stays float for geo coords
   longitude     Float?
 
-  // ── Worker Welfare & Fair Wages (SIH requirement) ─────────────────────
-  insuranceStatus          String  @default("NONE")   // ACTIVE | EXPIRED | NONE
+  insuranceStatus          String  @default("NONE")
   insuranceExpiry          DateTime?
-  welfareFundContribution  Float   @default(0.0)      // cumulative ₹ contributed to welfare fund
-  totalEarnings            Float   @default(0.0)      // lifetime verified earnings
+  
+  // Fixed: Financials changed to Int (paise)
+  welfareFundContribution  Int     @default(0)
+  totalEarnings            Int     @default(0)
 
-  // ── Relations ─────────────────────────────────────────────────────────
   bookings      Booking[]
   reviews       Review[]
   tickets       Ticket[]
@@ -134,10 +117,9 @@ model Worker {
   @@index([trustScore(sort: Desc)])
   @@index([societyId])
   @@index([categoryId])
-  @@index([latitude, longitude])              // supports geo-spatial queries
+  @@index([latitude, longitude])
   @@index([isGovtCertified])
 }
-
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  CUSTOMER
@@ -151,14 +133,12 @@ model Customer {
   updatedAt       DateTime  @updatedAt
   trustPassExpiry DateTime?
 
-  // ── Geo-Location (for matching nearest worker) ─────────────────────────
   latitude        Float?
   longitude       Float?
 
   bookings        Booking[]
   tickets         Ticket[]
 }
-
 
 // ═════════════════════════════════════════════════════════════════════════════
 //  BOOKING
@@ -168,21 +148,21 @@ model Booking {
   id          String   @id @default(cuid())
   customerId  String
   workerId    String
-  status      String   @default("PENDING")  // PENDING | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED
-  amount      Float?
+  status      String   @default("PENDING")
+  
+  // Fixed: Changed to Int
+  amount      Int?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  scheduledAt DateTime?                     // when the job is scheduled
+  scheduledAt DateTime?
 
-  // ── SIH — Emergency Booking flag ──────────────────────────────────────
   isEmergency Boolean  @default(false)
 
-  // ── Location snapshot at booking time (for analytics) ─────────────────
   pinCode     String?
   latitude    Float?
   longitude   Float?
 
-  // ── Relations ─────────────────────────────────────────────────────────
   customer    Customer  @relation(fields: [customerId], references: [id])
   worker      Worker    @relation(fields: [workerId], references: [id])
   invoice     Invoice?
@@ -193,28 +173,30 @@ model Booking {
   @@index([customerId])
   @@index([workerId])
   @@index([status])
-  @@index([pinCode])                        // for AI demand forecasting by pin code
+  @@index([pinCode])
   @@index([isEmergency])
-  @@index([createdAt])                      // for time-series booking analytics
+  @@index([createdAt])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  INVOICE  (SIH — Payment Transparency)
+//  INVOICE
 // ═════════════════════════════════════════════════════════════════════════════
 
 model Invoice {
   id              String   @id @default(cuid())
   bookingId       String   @unique
-  invoiceNumber   String   @unique @default(cuid())  // human-readable invoice ref
-  subtotal        Float
-  platformFee     Float    @default(0.0)             // marketplace commission
-  welfareFeeDeducted Float @default(0.0)             // deduction towards welfare fund
-  gst             Float    @default(0.0)
-  totalAmount     Float
+  invoiceNumber   String   @unique @default(cuid())
+  
+  // Fixed: All financials to Int
+  subtotal        Int
+  platformFee     Int      @default(0)
+  welfareFeeDeducted Int   @default(0)
+  gst             Int      @default(0)
+  totalAmount     Int
+  
   paidAt          DateTime?
-  paymentMethod   String?                            // UPI | CASH | CARD
-  paymentRef      String?                            // transaction reference
+  paymentMethod   String?
+  paymentRef      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -223,18 +205,20 @@ model Invoice {
   @@index([bookingId])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  TRANSACTION  (SIH — Split Payments)
+//  TRANSACTION
 // ═════════════════════════════════════════════════════════════════════════════
 
 model Transaction {
   id               String   @id @default(cuid())
   bookingId        String   @unique
-  totalAmount      Float
-  workerShare      Float    // 95%
-  societyFundShare Float    // 5%
-  status           String   @default("PENDING") // PENDING | SUCCESS | FAILED
+  
+  // Fixed: All financials to Int
+  totalAmount      Int
+  workerShare      Int    
+  societyFundShare Int    
+  
+  status           String   @default("PENDING")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -244,9 +228,8 @@ model Transaction {
   @@index([status])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  TICKET  (SIH — Grievance Redressal)
+//  TICKET
 // ═════════════════════════════════════════════════════════════════════════════
 
 model Ticket {
@@ -256,7 +239,7 @@ model Ticket {
   workerId    String?
   subject     String
   description String
-  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  status      String   @default("OPEN")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -270,16 +253,15 @@ model Ticket {
   @@index([status])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  REVIEW  (SIH — Transparent Feedback & Trust Score Driver)
+//  REVIEW
 // ═════════════════════════════════════════════════════════════════════════════
 
 model Review {
   id        String   @id @default(cuid())
   bookingId String   @unique
   workerId  String
-  rating    Int                             // 1–5 stars
+  rating    Int
   comment   String?
   createdAt DateTime @default(now())
 
@@ -290,9 +272,8 @@ model Review {
   @@index([rating])
 }
 
-
 // ═════════════════════════════════════════════════════════════════════════════
-//  VERIFICATION TOKEN  (preserved from v1 — OTP auth)
+//  VERIFICATION TOKEN
 // ═════════════════════════════════════════════════════════════════════════════
 
 model VerificationToken {
