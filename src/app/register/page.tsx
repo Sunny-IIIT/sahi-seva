@@ -1,16 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Phone, ShieldCheck, ArrowRight, Lock, LogIn } from "lucide-react";
+import { Phone, ShieldCheck, ArrowRight, UserPlus, User } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 
-export default function CustomerLogin() {
+export default function CustomerRegister() {
   const router = useRouter();
   const { t } = useLanguage();
   const supabase = createClient();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     router.push("/");
   };
@@ -46,12 +46,12 @@ export default function CustomerLogin() {
           {/* Icon + Title */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ width: 56, height: 56, background: '#eef2ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#4338ca' }}>
-              <LogIn size={26} />
+              <UserPlus size={26} />
             </div>
             <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 5 }}>
-              Welcome Back
+              Create an Account
             </h1>
-            <p style={{ fontSize: 14, color: '#64748b' }}>Sign in to manage your bookings</p>
+            <p style={{ fontSize: 14, color: '#64748b' }}>Sign up to book trusted workers</p>
           </div>
 
           <button 
@@ -67,42 +67,39 @@ export default function CustomerLogin() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            Continue with Google
+            Sign up with Google
           </button>
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
             <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>{t('login.or')} continue with phone</span>
+            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>or sign up with phone</span>
             <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('login.mobile')}</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>FULL NAME</label>
               <div style={{ position: 'relative' }}>
-                <Phone size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
-                <input required type="tel" placeholder="e.g. 9999999999" defaultValue="9999999999"
+                <User size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
+                <input required type="text" placeholder="e.g. Ramesh Kumar"
                   className="input" style={{ paddingLeft: 38 }} />
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('login.otp')}</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('login.mobile')}</label>
               <div style={{ position: 'relative' }}>
-                <ShieldCheck size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
-                <input required type="text" placeholder="6-digit OTP" defaultValue="123456"
-                  className="input" style={{ paddingLeft: 38, letterSpacing: '0.2em', fontWeight: 700, fontSize: 16 }} />
+                <Phone size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
+                <input required type="tel" placeholder="e.g. 9999999999"
+                  className="input" style={{ paddingLeft: 38 }} />
               </div>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5 }}>
-                <span style={{ color: '#4338ca', fontWeight: 600, cursor: 'pointer' }}>{t('login.resend')}</span> in 30s
-              </p>
             </div>
 
             <button type="submit" className="btn-primary" style={{ width: '100%', padding: '13px', borderRadius: 10, marginTop: 4, fontSize: 15 }}>
-              {t('login.btn')} <ArrowRight size={16} />
+              Create Account <ArrowRight size={16} />
             </button>
           </form>
 
@@ -112,9 +109,9 @@ export default function CustomerLogin() {
           </div>
 
           <div style={{ textAlign: 'center', fontSize: 14, color: '#64748b' }}>
-            Don't have an account?{' '}
-            <Link href="/register" style={{ color: '#4338ca', fontWeight: 600, textDecoration: 'none' }}>
-              Sign Up here
+            Already have an account?{' '}
+            <Link href="/login" style={{ color: '#4338ca', fontWeight: 600, textDecoration: 'none' }}>
+              Sign In here
             </Link>
           </div>
         </div>

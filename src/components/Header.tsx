@@ -1,14 +1,34 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldCheck, Menu, X, Home, Globe } from "lucide-react";
-import { useState } from "react";
+import { ShieldCheck, Menu, X, Home, Globe, User as UserIcon, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useLanguage, Lang } from "@/lib/i18n";
+import { createClient } from "@/lib/supabase/client";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { lang, setLang, t } = useLanguage();
   const pathname = usePathname();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    fetchUser();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <header style={{
@@ -61,9 +81,25 @@ export function Header() {
             </select>
           </div>
 
-          <Link href="/login" className="btn-primary" style={{ borderRadius: 9, padding: '9px 18px', textDecoration: 'none' }}>
-            {t('nav.signin')}
-          </Link>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', padding: '6px 12px', borderRadius: 20, border: '1px solid #e2e8f0' }}>
+                <div style={{ width: 24, height: 24, background: '#4f46e5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <UserIcon size={14} />
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
+                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                </span>
+              </div>
+              <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#ef4444'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
+                <LogOut size={16} /> Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="btn-primary" style={{ borderRadius: 9, padding: '9px 18px', textDecoration: 'none', marginLeft: 8 }}>
+              {t('nav.signin')}
+            </Link>
+          )}
         </nav>
 
         {/* Mobile button */}
@@ -98,10 +134,26 @@ export function Header() {
             </select>
           </div>
 
-          <Link href="/login" onClick={() => setOpen(false)} className="btn-primary"
-            style={{ textDecoration: 'none', textAlign: 'center', borderRadius: 9 }}>
-            {t('nav.signin')}
-          </Link>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', marginTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, background: '#4f46e5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <UserIcon size={16} />
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
+                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                </span>
+              </div>
+              <button onClick={() => { handleLogout(); setOpen(false); }} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                <LogOut size={14} /> Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" onClick={() => setOpen(false)} className="btn-primary"
+              style={{ textDecoration: 'none', textAlign: 'center', borderRadius: 9, marginTop: 4 }}>
+              {t('nav.signin')}
+            </Link>
+          )}
         </div>
       )}
     </header>
