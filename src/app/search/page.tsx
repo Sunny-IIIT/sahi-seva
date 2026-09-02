@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { WorkerCard } from "@/components/WorkerCard";
 import Link from "next/link";
 import { ArrowLeft, Search, AlertCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -35,6 +36,25 @@ function SearchContent() {
         setError('Could not reach the server. Check your connection.');
         setLoading(false);
       });
+
+    // Real-time Availability Sync
+    const supabase = createClient();
+    const channel = supabase
+      .channel('worker-status-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'Worker' },
+        (payload) => {
+          setWorkers(prev => prev.map(w => 
+            w.id === payload.new.id ? { ...w, isOnline: payload.new.isOnline } : w
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [query]);
 
   return (

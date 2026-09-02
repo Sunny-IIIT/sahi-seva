@@ -15,6 +15,7 @@ interface WorkerCardProps {
     price: string;
     ratings: number;
     profile_views: number;
+    isOnline?: boolean;
   };
   hasTrustPass: boolean;
   onUnlockContact: () => void;
@@ -81,6 +82,9 @@ export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCard
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={worker.photo} alt={worker.name}
               style={{ width: 60, height: 60, borderRadius: 14, objectFit: 'cover', border: '2px solid #e8eaf0', display: 'block' }} />
+            {worker.isOnline && (
+              <div style={{ position: 'absolute', top: -3, right: -3, background: '#22c55e', borderRadius: '50%', border: '2px solid #fff', width: 14, height: 14 }} />
+            )}
             {worker.verified && (
               <div style={{ position: 'absolute', bottom: -3, right: -3, background: '#16a34a', borderRadius: '50%', border: '2px solid #fff', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ShieldCheck size={11} color="white" />
