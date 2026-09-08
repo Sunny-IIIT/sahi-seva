@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { LanguageProvider } from "@/lib/i18n";
 import "./globals.css";
 
@@ -11,50 +11,60 @@ const inter = Inter({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
-  // metadataBase is REQUIRED in App Router — without it, relative OG image URLs break
-  // and WhatsApp/LinkedIn previews show a blank card.
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://sahi-seva-34by.vercel.app'
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sahi-seva-34by.vercel.app'),
   title: "SahiSeva - Find Trusted Workers Across India",
   description: "Book verified and background-checked maids, plumbers, electricians, and more instantly. Hire trusted blue-collar professionals with Aadhaar verification.",
-  keywords: ["sahiseva", "maids", "plumbers", "electricians", "blue collar jobs india", "hire workers", "trusted workers", "Aadhaar verified"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SahiSeva",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "SahiSeva | India's Most Trusted Home Services Platform",
-    description: "2,400+ Aadhaar-verified maids, plumbers, cooks & more — background-checked and ready to hire. Book in 2 minutes, anywhere in India.",
+    description: "2,400+ Aadhaar-verified maids, plumbers, cooks & more.",
     url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sahi-seva-34by.vercel.app',
     siteName: "SahiSeva",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=1200&h=630",
-        width: 1200,
-        height: 630,
-        alt: "SahiSeva — India's Trusted Home Services Platform",
-      },
-    ],
+    images: [{ url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=1200&h=630" }],
     locale: "en_IN",
     type: "website",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "SahiSeva | Hire Verified Workers in 2 Minutes",
-    description: "Aadhaar-verified maids, plumbers, cooks & more. 100% background-checked. Book anywhere in India.",
-    images: ["https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=1200&h=630"],
-  },
 };
-
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.className} h-full`}>
-      <body style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: '#ffffff', color: '#0f172a' }}>
+    <html lang="en" className={`${inter.className} h-full antialiased`}>
+      <body className="min-h-[100dvh] bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-x-hidden selection:bg-indigo-100 selection:text-indigo-900">
         <LanguageProvider>
-          <Header />
-          <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {children}
+          {/* Main Navigation: Sidebar (desktop) / Bottom Bar (mobile) */}
+          <Navigation />
+          
+          {/* Main Content Area: Pushed right on desktop, padded bottom on mobile */}
+          <main className="flex-1 flex flex-col w-full md:pl-64 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300 min-h-[100dvh] relative">
+            
+            {/* Top Header only visible on Mobile (Desktop has Sidebar) */}
+            <div className="md:hidden">
+              <Header />
+            </div>
+
+            <div className="flex-1 flex flex-col relative w-full h-full">
+              {children}
+            </div>
+            
+            {/* Legacy Footer removed to prevent Native App dashboard layout glitches */}
           </main>
-          <Footer />
         </LanguageProvider>
       </body>
     </html>

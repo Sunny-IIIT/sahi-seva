@@ -1,140 +1,201 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, FileCheck, Users, Ban, XCircle, CheckCircle2, Activity } from "lucide-react";
-
-const PENDING_BGV = [
-  { id: "WRK-9001", name: "Suresh", category: "Electricians", token: "TOKEN_8Y3D1P" },
-  { id: "WRK-9002", name: "Geeta",  category: "Cooks",        token: "TOKEN_4C9X2A" },
-];
-
-const KPI = [
-  { label: "Total Revenue", value: "₹1,24,500", sub: "+18% this month", Icon: DollarSign, color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
-  { label: "Pending BGV",    value: "2",          sub: "Needs review",    Icon: FileCheck,  color: "#d97706", bg: "#fffbeb", border: "#fde68a" },
-  { label: "Active Workers", value: "4,892",      sub: "Across India",    Icon: Users,      color: "#4338ca", bg: "#eef2ff", border: "#c7d2fe" },
-];
+import { Users, FileCheck, MapPin, Search, Bell, AlertTriangle, ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [bgvList, setBgvList] = useState(PENDING_BGV);
+  const [activeTab, setActiveTab] = useState<'overview' | 'kyc' | 'dispatch'>('overview');
+
+  const pendingKYC = [
+    { id: 'W-901', name: 'Ramesh Kumar', category: 'Electrician', phone: '+91 9876543210', date: '2 hrs ago' },
+    { id: 'W-902', name: 'Anita D.', category: 'Plumber', phone: '+91 8765432109', date: '5 hrs ago' },
+  ];
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 60 }}>
-
-      {/* Top Banner */}
-      <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: '28px 24px 72px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'rgba(67,56,202,0.15)' }} />
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: 5 }}>SAHISEVA</p>
-            <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', marginBottom: 4 }}>
-              ⚡ God Mode
-            </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>Admin Dashboard — Full Control</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 14px' }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>System Online</span>
-            <Activity size={14} color="rgba(255,255,255,0.5)" />
-          </div>
+    <div className="min-h-screen bg-slate-50 flex font-sans">
+      
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
+        <div className="p-6">
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <ShieldCheck className="text-indigo-500" /> SahiSeva Admin
+          </h1>
+          <p className="text-xs mt-1 text-slate-500">Cooperative Federation HQ</p>
         </div>
-      </div>
+        
+        <nav className="flex-1 mt-6">
+          <ul className="space-y-2 px-4">
+            <li>
+              <button 
+                onClick={() => setActiveTab('overview')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'overview' ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-slate-800'}`}
+              >
+                <AlertTriangle size={18} /> Overview & Disputes
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={() => setActiveTab('kyc')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'kyc' ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-slate-800'}`}
+              >
+                <FileCheck size={18} /> KYC Verification
+                <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">2</span>
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={() => setActiveTab('dispatch')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dispatch' ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-slate-800'}`}
+              >
+                <MapPin size={18} /> Live Dispatch Radar
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </aside>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', marginTop: -44, position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* KPI Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-          {KPI.map(k => (
-            <div key={k.label} style={{ background: '#fff', border: `1px solid ${k.border}`, borderRadius: 16, padding: '20px 22px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 13, background: k.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: k.color, flexShrink: 0 }}>
-                <k.Icon size={24} />
-              </div>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 3 }}>{k.label}</p>
-                <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1 }}>{k.value}</p>
-                <p style={{ fontSize: 11, color: k.color, fontWeight: 700, marginTop: 4 }}>{k.sub}</p>
-              </div>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        {/* HEADER */}
+        <header className="bg-white px-8 py-5 border-b border-slate-200 flex justify-between items-center shrink-0">
+          <h2 className="text-2xl font-bold text-slate-900 capitalize">
+            {activeTab.replace('-', ' ')}
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input type="text" placeholder="Search ID, Worker, Phone..." className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64" />
             </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-
-          {/* BGV Queue */}
-          <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>BGV Clearance Queue</h3>
-                <p style={{ fontSize: 12, color: '#94a3b8' }}>Verify tokenized Aadhaar uploads</p>
-              </div>
-              <span style={{ background: bgvList.length > 0 ? '#fffbeb' : '#f0fdf4', color: bgvList.length > 0 ? '#d97706' : '#16a34a', border: `1px solid ${bgvList.length > 0 ? '#fde68a' : '#bbf7d0'}`, borderRadius: 9999, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                {bgvList.length} pending
-              </span>
-            </div>
-            <div>
-              {bgvList.length === 0 ? (
-                <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-                  <p style={{ fontWeight: 700, color: '#16a34a', fontSize: 14 }}>All caught up!</p>
-                  <p style={{ color: '#94a3b8', fontSize: 13 }}>No pending verifications</p>
-                </div>
-              ) : bgvList.map(w => (
-                <div key={w.id} style={{ padding: '16px 22px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div>
-                    <p style={{ fontWeight: 700, color: '#0f172a', fontSize: 14, marginBottom: 3 }}>
-                      {w.name} <span style={{ color: '#64748b', fontWeight: 500 }}>· {w.category}</span>
-                    </p>
-                    <p style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', background: '#f8fafc', padding: '2px 8px', borderRadius: 5, display: 'inline-block' }}>
-                      Ref: {w.token}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setBgvList(bgvList.filter(x => x.id !== w.id))}
-                      style={{ padding: '7px', background: '#fff0f0', border: '1px solid #fecaca', borderRadius: 8, cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center' }}>
-                      <XCircle size={18} />
-                    </button>
-                    <button onClick={() => setBgvList(bgvList.filter(x => x.id !== w.id))}
-                      style={{ padding: '7px 14px', background: '#16a34a', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={15} /> Approve
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <button className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200 relative">
+              <Bell size={20} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+            <div className="w-10 h-10 bg-indigo-900 rounded-full text-white flex items-center justify-center font-bold">A</div>
           </div>
+        </header>
 
-          {/* Moderation */}
-          <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>User Moderation</h3>
-                <p style={{ fontSize: 12, color: '#94a3b8' }}>Ban or deactivate reported accounts</p>
-              </div>
-              <input type="text" placeholder="Search Phone / ID…" className="input" style={{ width: 180, fontSize: 13, padding: '7px 12px' }} />
-            </div>
-
-            <div style={{ padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Reported user row */}
-              <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="https://i.pravatar.cc/150?u=reported1" alt="Rakesh" style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', border: '2px solid #fecaca' }} />
-                  <div>
-                    <p style={{ fontWeight: 700, color: '#0f172a', fontSize: 14 }}>Rakesh M. (Mechanic)</p>
-                    <p style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>⚠️ Reported 3 times today</p>
-                  </div>
+        {/* TAB CONTENT */}
+        <div className="flex-1 overflow-auto p-8">
+          
+          {/* OVERVIEW TAB */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Metrics Strip */}
+              <div className="grid grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Welfare Fund</p>
+                  <h3 className="text-3xl font-black text-slate-900">₹45,290</h3>
+                  <p className="text-xs text-emerald-600 mt-2 font-medium">↑ 12% this week</p>
                 </div>
-                <button style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#dc2626', border: 'none', borderRadius: 8, padding: '8px 14px', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  <Ban size={14} /> Instant Ban
-                </button>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Active Workers</p>
+                  <h3 className="text-3xl font-black text-slate-900">124</h3>
+                  <p className="text-xs text-emerald-600 mt-2 font-medium">↑ 4 new today</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Gigs Today</p>
+                  <h3 className="text-3xl font-black text-slate-900">89</h3>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">In Progress: 12</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-red-500">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Open Disputes</p>
+                  <h3 className="text-3xl font-black text-slate-900 text-red-600">3</h3>
+                  <p className="text-xs text-red-500 mt-2 font-bold cursor-pointer hover:underline">Requires Attention</p>
+                </div>
               </div>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>
-                Search an account to manage status
+              {/* Disputes Table */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                  <h3 className="font-bold text-slate-900">Urgent Dispute Tickets</h3>
+                </div>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-xs uppercase tracking-wider text-slate-500">
+                      <th className="px-6 py-3 font-bold">Ticket ID</th>
+                      <th className="px-6 py-3 font-bold">Booking ID</th>
+                      <th className="px-6 py-3 font-bold">Customer</th>
+                      <th className="px-6 py-3 font-bold">Status</th>
+                      <th className="px-6 py-3 text-right font-bold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-100">
+                      <td className="px-6 py-4 font-mono text-sm">#TCK-992</td>
+                      <td className="px-6 py-4 font-mono text-sm text-indigo-600">BKG-4001</td>
+                      <td className="px-6 py-4 text-sm font-medium">Vikram S.</td>
+                      <td className="px-6 py-4"><span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">OPEN</span></td>
+                      <td className="px-6 py-4 text-right"><button className="text-indigo-600 text-sm font-bold hover:underline">Review</button></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* KYC TAB */}
+          {activeTab === 'kyc' && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h3 className="font-bold text-slate-900">Pending Verification</h3>
+                <span className="text-sm text-slate-500">2 requests</span>
+              </div>
+              <ul className="divide-y divide-slate-100">
+                {pendingKYC.map((req, i) => (
+                  <li key={i} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
+                        {req.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-lg">{req.name} <span className="text-xs font-mono text-slate-400 ml-2">{req.id}</span></h4>
+                        <p className="text-sm text-slate-500">{req.category} • {req.phone} • Applied {req.date}</p>
+                        <a href="#" className="text-xs text-indigo-600 font-bold mt-1 inline-block hover:underline"><FileCheck size={12} className="inline mr-1" /> View Aadhaar.pdf</a>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors text-sm">
+                        <XCircle size={16} /> Reject
+                      </button>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors text-sm shadow-md">
+                        <CheckCircle2 size={16} /> Approve Profile
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* DISPATCH RADAR TAB */}
+          {activeTab === 'dispatch' && (
+            <div className="h-[600px] bg-slate-200 rounded-xl border border-slate-300 relative overflow-hidden flex items-center justify-center">
+               {/* Mock Map Background */}
+              <div className="absolute inset-0 bg-[url('https://maps.wikimedia.org/osm-intl/13/5799/3855.png')] bg-cover bg-center opacity-70"></div>
+              
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-200">
+                <h3 className="font-bold text-slate-900 mb-2">Live Fleet Metrics</h3>
+                <ul className="text-sm space-y-2">
+                  <li className="flex justify-between gap-8"><span className="text-slate-500">Online Workers</span><span className="font-bold text-emerald-600">42</span></li>
+                  <li className="flex justify-between gap-8"><span className="text-slate-500">Active Jobs</span><span className="font-bold text-indigo-600">12</span></li>
+                </ul>
+              </div>
+
+              {/* Markers */}
+              <div className="absolute top-1/3 left-1/4">
+                <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">IDLE</div>
+              </div>
+              <div className="absolute bottom-1/3 right-1/3">
+                <div className="w-4 h-4 bg-indigo-600 rounded-full border-2 border-white shadow-md animate-pulse"></div>
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded">IN_PROGRESS</div>
+              </div>
+            </div>
+          )}
+
         </div>
-      </div>
+      </main>
     </div>
   );
 }

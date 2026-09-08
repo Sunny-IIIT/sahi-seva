@@ -28,7 +28,7 @@ export function CategoryGrid() {
         {/* Cards Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
           {(CATEGORIES as Cat[]).map((cat) => (
-            <Link href={`/category/${cat.id}`} key={cat.id} style={{ textDecoration: 'none' }}>
+            <Link href={`/customer/book?q=${encodeURIComponent(cat.name)}`} key={cat.id} style={{ textDecoration: 'none' }}>
               <div
                 style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', transition: 'all 0.22s ease' }}
                 onMouseEnter={e => {

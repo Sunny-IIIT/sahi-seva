@@ -28,95 +28,68 @@
 
   /* Shadows */
   --shadow-sm:      0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:      0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg:      0 10px 36px rgba(0,0,0,0.1);
-  --shadow-primary: 0 4px 16px rgba(67,56,202,0.28);
-  --shadow-primary-lg: 0 8px 28px rgba(67,56,202,0.38);
+  --shadow-md:      0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-lg:      0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.03);
+  
+  --radius-sm: 8px;
+  --radius:    12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
 }
 
-@theme inline {
-  --color-background: var(--bg);
-  --color-foreground: var(--text-1);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --color-primary: var(--primary);
-  --color-primary-dark: var(--primary-hover);
-  --color-success: var(--success);
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; }
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
+/* 📱 NATIVE APP CSS HACKS */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  background-color: var(--bg-subtle);
   color: var(--text-1);
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  /* Disable tap flash on mobile */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Safe area insets for notches */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+
+  /* Prevent overscroll bounce on mobile */
+  overscroll-behavior-y: none;
 }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-subtle); }
-::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #4338ca 0%, #0891b2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Prevent text highlighting on interactive elements */
+button, a, .select-none {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Button */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  background: var(--primary);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+/* Base button styles */
+button {
   font-family: inherit;
   border: none;
-  border-radius: 10px;
-  padding: 11px 22px;
+  background: none;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-  box-shadow: var(--shadow-primary);
-  letter-spacing: -0.01em;
-  text-decoration: none;
 }
-.btn-primary:hover { background: var(--primary-hover); box-shadow: var(--shadow-primary-lg); transform: translateY(-1px); }
-.btn-primary:active { transform: translateY(0); }
 
-/* Input */
-.input {
-  width: 100%;
-  background: var(--bg-subtle);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  color: var(--text-1);
-  padding: 10px 14px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-  -webkit-appearance: none;
+* {
+  box-sizing: border-box;
 }
-.input::placeholder { color: var(--text-4); }
-.input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(67,56,202,0.1); }
 
-/* Animations */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Hide scrollbar for a cleaner mobile feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-.animate-fade-up { animation: fadeUp 0.45s ease both; }
-.animate-fade-in { animation: fadeIn 0.3s ease both; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-md);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-4);
+}

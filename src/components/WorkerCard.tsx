@@ -1,7 +1,6 @@
-import { Star, MapPin, Phone, ShieldCheck, BadgeCheck, Clock, CheckCircle2 } from "lucide-react";
+import { Star, MapPin, ShieldCheck, BadgeCheck, Clock, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { PaymentModal } from "./PaymentModal";
 
 interface WorkerCardProps {
   worker: {
@@ -22,39 +21,6 @@ interface WorkerCardProps {
 }
 
 export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCardProps) {
-  const [showPayment, setShowPayment] = useState(false);
-  const [unlockedPhone, setUnlockedPhone] = useState<string | null>(null);
-
-  const [isLoadingPhone, setIsLoadingPhone] = useState(false);
-
-  const handleUnlock = () => {
-    setShowPayment(true);
-  };
-
-  const handlePaymentSuccess = async () => {
-    setShowPayment(false);
-    setIsLoadingPhone(true);
-    try {
-      const res = await fetch('/api/workers/unlock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workerId: worker.id })
-      });
-      const data = await res.json();
-      if (data.success && data.phone) {
-        setUnlockedPhone(data.phone);
-      } else {
-        alert('Failed to fetch contact details.');
-      }
-    } catch(err) {
-      alert('Network error while unlocking contact.');
-    } finally {
-      setIsLoadingPhone(false);
-    }
-  };
-
-  const displayPhone = worker.phone_number || unlockedPhone || "XXXXX XXXXX";
-
   return (
     <div
       style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.22s ease' }}
@@ -124,34 +90,15 @@ export function WorkerCard({ worker, hasTrustPass, onUnlockContact }: WorkerCard
           <span style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{worker.price}</span>
         </div>
 
-        {/* CTA button */}
-        {hasTrustPass && worker.phone_number ? (
-          <a href={`tel:${worker.phone_number}`}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '12px', background: '#16a34a', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none', boxShadow: '0 4px 12px rgba(22,163,74,0.25)' }}>
-            <Phone size={15} /> Call: +91 {displayPhone}
-          </a>
-        ) : (
-          /* Contact Logic */
-          unlockedPhone ? (
-            <a href={`tel:${unlockedPhone}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#16a34a', color: '#fff', borderRadius: 8, padding: '12px 0', fontSize: 14, fontWeight: 700, textDecoration: 'none', transition: 'background 0.2s', boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)' }}>
-              <Phone size={18} /> {unlockedPhone}
-            </a>
-          ) : (
-            <button disabled={isLoadingPhone} onClick={onUnlockContact || handleUnlock} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0f172a', color: '#fff', borderRadius: 8, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: isLoadingPhone ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.2s', opacity: isLoadingPhone ? 0.7 : 1 }}>
-              <Phone size={18} /> {isLoadingPhone ? 'Unlocking...' : 'Unlock Contact'}
-            </button>
-          )
-        )}
+        {/* CTA button (Moved to Dispatch Flow) */}
+        <a href="/customer/book"
+           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '12px', background: '#0f172a', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none', transition: 'background 0.2s', boxShadow: '0 4px 12px rgba(15,23,42,0.2)' }}
+           onMouseEnter={e => e.currentTarget.style.background = '#1e293b'}
+           onMouseLeave={e => e.currentTarget.style.background = '#0f172a'}
+        >
+          <MapPin size={18} /> Find via Radar
+        </a>
       </div>
-
-      {/* Payment simulated Flow */}
-      {showPayment && !unlockedPhone && (
-        <PaymentModal 
-          workerName={worker.name} 
-          onClose={() => setShowPayment(false)} 
-          onSuccess={handlePaymentSuccess} 
-        />
-      )}
     </div>
   );
 }

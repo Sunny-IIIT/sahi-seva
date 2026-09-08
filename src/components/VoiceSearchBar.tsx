@@ -59,7 +59,7 @@ export default function VoiceSearchBar() {
 
   const handleSearch = (searchQuery: string = query) => {
     if (!searchQuery.trim()) return;
-    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    router.push(`/customer/book?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

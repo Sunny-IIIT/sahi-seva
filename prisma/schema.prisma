@@ -12,6 +12,12 @@ datasource db {
 // STATUS ENUMERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 //  COOPERATIVE ADMINISTRATION
 // ═════════════════════════════════════════════════════════════════════════════
@@ -49,6 +55,14 @@ model Society {
   @@index([pinCode])
 }
 
+model SocietyFund {
+  id              String   @id @default(cuid())
+  branchName      String   @unique
+  totalPoolAmount Float    @default(0)
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 //  SERVICE CATEGORY
 // ═════════════════════════════════════════════════════════════════════════════
@@ -82,6 +96,7 @@ model Worker {
   aadhaarToken  String?   @unique
   
   status        String    @default("PENDING")
+  walletBalance Int       @default(0) // Prepaid Lead Wallet
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   jobsDone      Int       @default(0)
@@ -94,9 +109,13 @@ model Worker {
   categoryId    String?
   serviceCategory ServiceCategory? @relation(fields: [categoryId], references: [id])
 
-  certificationType String  @default("NONE")
-  isGovtCertified   Boolean @default(false)
-  certificationUrl  String?
+  certificationType  String  @default("NONE")
+  isGovtCertified    Boolean @default(false)
+  
+  // Verification Module Fields
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  certificateUrl     String?
+  skills             String[]
 
   latitude      Float?    // Stays float for geo coords
   longitude     Float?
@@ -105,9 +124,9 @@ model Worker {
   insuranceStatus          String  @default("NONE")
   insuranceExpiry          DateTime?
   
-  // Fixed: Financials changed to Int (paise)
-  welfareFundContribution  Int     @default(0)
-  totalEarnings            Int     @default(0)
+  // Fixed: Financials changed to Float per strict backend steps
+  welfareBalance           Float   @default(0)
+  totalEarnings            Float   @default(0)
 
   bookings      Booking[]
   reviews       Review[]
@@ -145,14 +164,24 @@ model Customer {
 //  BOOKING
 // ═════════════════════════════════════════════════════════════════════════════
 
+enum BookingStatus {
+  SEARCHING
+  ACCEPTED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model Booking {
   id          String   @id @default(cuid())
   customerId  String
-  workerId    String
-  status      String   @default("PENDING")
+  workerId    String?
+  status      BookingStatus @default(SEARCHING)
   
   // Fixed: Changed to Int
   amount      Int?
+  priceEstimate Int?
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -160,14 +189,19 @@ model Booking {
 
   isEmergency Boolean  @default(false)
   serviceOtp  String?
+  visualProofUrl String?
+  
+  acceptedAt  DateTime?
+  arrivedAt   DateTime?
   startedAt   DateTime?
+  completedAt DateTime?
 
   pinCode     String?
   latitude    Float?
   longitude   Float?
 
   customer    Customer  @relation(fields: [customerId], references: [id])
-  worker      Worker    @relation(fields: [workerId], references: [id])
+  worker      Worker?   @relation(fields: [workerId], references: [id])
   invoice     Invoice?
   review      Review?
   tickets     Ticket[]
@@ -235,14 +269,19 @@ model Transaction {
 //  TICKET
 // ═════════════════════════════════════════════════════════════════════════════
 
+enum TicketStatus {
+  OPEN
+  RESOLVED
+}
+
 model Ticket {
   id          String   @id @default(cuid())
   bookingId   String
   customerId  String?
   workerId    String?
-  subject     String
+  issueType   String?
   description String
-  status      String   @default("OPEN")
+  status      TicketStatus @default(OPEN)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

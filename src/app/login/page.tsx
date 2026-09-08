@@ -1,19 +1,15 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Phone, ShieldCheck, ArrowRight, Lock, LogIn } from "lucide-react";
-import { useLanguage } from "@/lib/i18n";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Shield, MessageCircle, Timer, ArrowRight } from "lucide-react";
 
 export default function CustomerLogin() {
   const router = useRouter();
-  const { t } = useLanguage();
   const supabase = createClient();
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push("/");
-  };
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -24,101 +20,153 @@ export default function CustomerLogin() {
     });
   };
 
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push("/");
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f0f4ff 0%, #f8fafc 60%, #e8f4fd 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
-      <div style={{ width: '100%', maxWidth: 440 }}>
+    <div className="bg-[#f8fafc] text-[#131b2e] antialiased min-h-screen flex flex-col justify-between selection:bg-[#4338ca] selection:text-white font-sans">
+      <style dangerouslySetInnerHTML={{__html: `
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Public+Sans:wght@600;700&display=swap');
+      `}} />
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <div style={{ background: '#4338ca', borderRadius: 10, padding: '7px', display: 'flex' }}>
-              <ShieldCheck size={18} color="white" />
+      {/* Main Center Authentication Canvas */}
+      <main className="flex-grow flex items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-[460px] bg-white rounded-xl border border-[#e2e8f0] p-6 sm:p-8 shadow-[0_2px_4px_-1px_rgba(15,23,42,0.04),0_4px_6px_-2px_rgba(15,23,42,0.03)] relative overflow-hidden">
+          {/* Subtle Brand Accent Bar */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#2a14b4] to-[#4338ca]"></div>
+          
+          {/* Header & Tagline */}
+          <div className="text-center pt-2 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f2f3ff] border border-[#e2e8f0] mb-4">
+              <Shield className="text-[#006c4a]" size={16} />
+              <span className="font-bold text-[11px] tracking-wider uppercase text-[#464554]">National Verified Worker Network</span>
             </div>
-            <span style={{ fontWeight: 800, fontSize: 18, color: '#0f172a' }}>
-              Sahi<span style={{ color: '#4338ca' }}>seva</span>
-            </span>
-          </Link>
-        </div>
-
-        {/* Card */}
-        <div style={{ background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 8px 32px rgba(67,56,202,0.1), 0 2px 8px rgba(0,0,0,0.04)', padding: '36px 32px' }}>
-
-          {/* Icon + Title */}
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ width: 56, height: 56, background: '#eef2ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#4338ca' }}>
-              <LogIn size={26} />
-            </div>
-            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 5 }}>
-              Welcome Back
-            </h1>
-            <p style={{ fontSize: 14, color: '#64748b' }}>Sign in to manage your bookings</p>
+            <h1 className="font-bold text-[24px] text-[#131b2e] tracking-tight font-['Public_Sans']">Welcome Back</h1>
+            <p className="text-[14px] text-[#464554] mt-1">Enter your verified credentials or login via fast OTP</p>
           </div>
 
+          {/* Continue with Google Button */}
           <button 
-            type="button" 
-            onClick={handleGoogleLogin} 
-            style={{ width: '100%', padding: '12px', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, background: '#fff', border: '1px solid #e2e8f0', color: '#0f172a', fontWeight: 600, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; }}
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-white border border-[#cbd5e1] rounded-lg hover:bg-[#f8fafc] hover:border-[#94a3b8] transition-colors duration-150 text-[#131b2e] font-semibold text-[14px] active:scale-[0.99]" 
+            type="button"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24">
+              <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
+              <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.37 7.34 24 12 24z" fill="#34A853"></path>
+              <path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z" fill="#FBBC05"></path>
+              <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.25 2.63 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
             </svg>
-            Continue with Google
+            <span>Continue with Google</span>
           </button>
 
           {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>{t('login.or')} continue with phone</span>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          <div className="relative my-6 flex items-center justify-center">
+            <div className="border-t border-[#e2e8f0] w-full"></div>
+            <span className="bg-white px-3 text-[#464554] font-bold text-[11px] tracking-wider uppercase text-center shrink-0">OR continue with phone</span>
+            <div className="border-t border-[#e2e8f0] w-full"></div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
+          {/* Authentication Form */}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {/* Mobile Input */}
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('login.mobile')}</label>
-              <div style={{ position: 'relative' }}>
-                <Phone size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
-                <input required type="tel" placeholder="e.g. 9999999999" defaultValue="9999999999"
-                  className="input" style={{ paddingLeft: 38 }} />
+              <label className="block font-semibold text-[14px] text-[#131b2e] mb-1.5" htmlFor="mobileInput">
+                Registered Mobile Number
+              </label>
+              <div className="relative flex rounded-lg border border-[#cbd5e1] bg-white focus-within:border-[#4338ca] focus-within:ring-2 focus-within:ring-[#4338ca]/15 transition-all">
+                <div className="flex items-center gap-1.5 px-3 bg-[#f2f3ff] border-r border-[#cbd5e1] rounded-l-lg text-[#131b2e] shrink-0 select-none">
+                  <span className="text-base leading-none">🇮🇳</span>
+                  <span className="font-medium text-[14px] font-['JetBrains_Mono']">+91</span>
+                </div>
+                <input 
+                  className="w-full px-3 py-2.5 bg-transparent border-0 font-medium text-[14px] font-['JetBrains_Mono'] text-[#131b2e] placeholder:text-[#777586] focus:ring-0 focus:outline-none" 
+                  id="mobileInput" 
+                  maxLength={10} 
+                  placeholder="98765 43210" 
+                  type="tel"
+                />
               </div>
             </div>
 
+            {/* 6-digit OTP Block */}
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.04em' }}>{t('login.otp')}</label>
-              <div style={{ position: 'relative' }}>
-                <ShieldCheck size={15} color="#94a3b8" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
-                <input required type="text" placeholder="6-digit OTP" defaultValue="123456"
-                  className="input" style={{ paddingLeft: 38, letterSpacing: '0.2em', fontWeight: 700, fontSize: 16 }} />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="font-semibold text-[14px] text-[#131b2e]">6-Digit Civic Verification OTP</label>
+                <button className="font-semibold text-[12px] text-[#2a14b4] hover:underline flex items-center gap-1" type="button">
+                  <MessageCircle size={14} />
+                  <span>Get OTP on WhatsApp</span>
+                </button>
               </div>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5 }}>
-                <span style={{ color: '#4338ca', fontWeight: 600, cursor: 'pointer' }}>{t('login.resend')}</span> in 30s
+              <div className="grid grid-cols-6 gap-2">
+                {[0,1,2,3,4,5].map((idx) => (
+                  <input 
+                    key={idx}
+                    ref={el => { otpRefs.current[idx] = el; }}
+                    value={otp[idx]}
+                    onChange={e => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={e => handleOtpKeyDown(idx, e)}
+                    className="h-12 w-full text-center font-medium text-[20px] font-['JetBrains_Mono'] text-[#131b2e] bg-white border border-[#cbd5e1] rounded-lg focus:border-[#4338ca] focus:ring-2 focus:ring-[#4338ca]/20 focus:outline-none transition-all" 
+                    inputMode="numeric" 
+                    maxLength={1} 
+                    type="text" 
+                  />
+                ))}
+              </div>
+              <p className="text-[12px] text-[#464554] mt-2 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Timer size={14} className="text-[#006c4a]" />
+                  Resend code in <strong className="font-medium font-['JetBrains_Mono'] text-[#131b2e]">00:48</strong>
+                </span>
+                <button className="text-[#464554] hover:text-[#2a14b4] transition-colors" type="button">Need Help?</button>
               </p>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', padding: '13px', borderRadius: 10, marginTop: 4, fontSize: 15 }}>
-              {t('login.btn')} <ArrowRight size={16} />
+            {/* Primary Submit Button */}
+            <button 
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#4338ca] hover:bg-[#3730a3] text-white rounded-lg font-semibold text-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4338ca] mt-6" 
+              type="submit"
+            >
+              <span>Authenticate & Proceed</span>
+              <ArrowRight size={18} />
             </button>
           </form>
 
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-          </div>
-
-          <div style={{ textAlign: 'center', fontSize: 14, color: '#64748b' }}>
-            Don't have an account?{' '}
-            <Link href="/register" style={{ color: '#4338ca', fontWeight: 600, textDecoration: 'none' }}>
-              Sign Up here
-            </Link>
+          {/* Sign Up Redirection Footer */}
+          <div className="mt-6 pt-4 border-t border-[#f1f5f9] text-center">
+            <p className="text-[14px] text-[#464554]">
+              Don't have an account?{' '}
+              <Link className="font-semibold text-[#2a14b4] hover:underline hover:text-[#4338ca] transition-colors" href="/register">Sign Up here</Link>
+            </p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

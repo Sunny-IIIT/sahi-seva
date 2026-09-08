@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, ArrowRight, Shield, Star, CheckCircle, Users, TrendingUp, Mic, MicOff } from "lucide-react";
+import { Search, MapPin, ArrowRight, Shield, Star, CheckCircle, Users, TrendingUp, Mic, MicOff, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 const POPULAR = ["Maids", "Plumbers", "Cooks", "Electricians", "Painters"];
@@ -66,7 +66,7 @@ export function Hero() {
     if (query.trim()) {
       // Append location to query if present
       const finalQ = location.trim() ? `${query} ${location}` : query;
-      router.push(`/search?q=${encodeURIComponent(finalQ)}`);
+      router.push(`/customer/book?q=${encodeURIComponent(finalQ)}`);
     }
   };
 
@@ -106,7 +106,10 @@ export function Hero() {
             
             {/* Category Input */}
             <div ref={catRef} style={{ position: 'relative', flex: 1, minWidth: 180 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', border: '1px solid #e8ecf8', height: '100%' }}>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', border: '1px solid #e8ecf8', height: '100%', cursor: 'text' }}
+                onClick={() => setShowCat(true)}
+              >
                 <Search size={16} color="#4338ca" style={{ flexShrink: 0 }} />
                 <input 
                   value={query}
@@ -128,11 +131,12 @@ export function Hero() {
                     )}
                   </button>
                 )}
+                <ChevronDown size={16} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setShowCat(!showCat)} />
               </div>
               {/* Category Dropdown */}
-              {showCat && query && filteredCats.length > 0 && (
+              {showCat && (query ? filteredCats : ALL_CATEGORIES).length > 0 && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, padding: '8px 0', maxHeight: 220, overflowY: 'auto' }}>
-                  {filteredCats.map(cat => (
+                  {(query ? filteredCats : ALL_CATEGORIES).map(cat => (
                     <div 
                       key={cat} 
                       onClick={() => { setQuery(cat); setShowCat(false); document.getElementById('city-input')?.focus(); }}
@@ -149,7 +153,10 @@ export function Hero() {
 
             {/* City Input */}
             <div ref={cityRef} style={{ position: 'relative', flex: 1, minWidth: 160 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', border: '1px solid #e8ecf8', height: '100%' }}>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', borderRadius: 10, padding: '10px 14px', border: '1px solid #e8ecf8', height: '100%', cursor: 'text' }}
+                onClick={() => setShowCity(true)}
+              >
                 <MapPin size={16} color="#0891b2" style={{ flexShrink: 0 }} />
                 <input 
                   id="city-input"
@@ -160,15 +167,27 @@ export function Hero() {
                   style={{ background: 'none', border: 'none', outline: 'none', fontSize: 14, color: '#0f172a', width: '100%', fontFamily: 'inherit', fontWeight: 500 }} 
                   autoComplete="off"
                 />
+                <ChevronDown size={16} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setShowCity(!showCity)} />
               </div>
               {/* City Dropdown */}
-              {showCity && filteredCities.length > 0 && (
+              {showCity && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, padding: '8px 0', maxHeight: 220, overflowY: 'auto' }}>
-                  <div style={{ padding: '6px 16px', fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>POPULAR CITIES</div>
-                  {filteredCities.map(city => (
+                  
+                  {/* Live Location Option */}
+                  <div 
+                    onClick={() => { setLocation("Current Location"); setShowCity(false); }}
+                    style={{ padding: '10px 16px', fontSize: 14, color: '#0891b2', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontWeight: 600, borderBottom: '1px solid #f1f5f9' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <MapPin size={14} fill="#0891b2" color="#fff" /> Use Current Location
+                  </div>
+
+                  <div style={{ padding: '8px 16px 4px', fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>POPULAR CITIES</div>
+                  {(location ? filteredCities : CITIES).map(city => (
                     <div 
                       key={city} 
-                      onClick={() => { setLocation(city); setShowCity(false); handleSearch(); }}
+                      onClick={() => { setLocation(city); setShowCity(false); }}
                       style={{ padding: '10px 16px', fontSize: 14, color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'background 0.1s' }}
                       onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -185,11 +204,10 @@ export function Hero() {
             </button>
           </form>
 
-          {/* Popular tags */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 48 }}>
             <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>{t('hero.popular')}</span>
             {POPULAR.map(tag => (
-              <button key={tag} onClick={() => router.push(`/search?q=${tag}`)} style={{ fontSize: 13, color: '#4338ca', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 9999, padding: '4px 12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button key={tag} onClick={() => router.push(`/customer/book?q=${tag}`)} style={{ fontSize: 13, color: '#4338ca', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 9999, padding: '4px 12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {t(`cat.${tag}`)}
               </button>
             ))}

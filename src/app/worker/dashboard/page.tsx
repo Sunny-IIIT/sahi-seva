@@ -1,238 +1,347 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import { Star, Eye, ShieldCheck, TrendingUp, Edit3, Check, X, Bell, BookOpen, UserCircle2, Power } from "lucide-react";
-import Image from "next/image";
-import { useLanguage } from "@/lib/i18n";
+import { motion, AnimatePresence } from "framer-motion";
+import { Power, MapPin, Navigation, ShieldCheck, CheckCircle2, Camera } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function WorkerDashboard() {
-  const { t } = useLanguage();
-  
-  const [worker, setWorker] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
+  const [bookingState, setBookingState] = useState<'IDLE' | 'RINGING' | 'ACCEPTED' | 'ARRIVED' | 'IN_PROGRESS'>('IDLE');
+  const [timer, setTimer] = useState(15);
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const [isUploadingOverride, setIsUploadingOverride] = useState(false);
 
-  const STATS = [
-    { label: t('dash.stat1'), value: "120", sub: t('dash.stat1sub'), Icon: Eye, color: "#4f46e5", bg: "#eef2ff" },
-    { label: t('dash.stat2'), value: worker?.jobsDone || "0", sub: t('dash.stat2sub'), Icon: Star, color: "#d97706", bg: "#fffbeb" },
-    { label: t('dash.stat3'), value: worker?.jobsDone || "0", sub: t('dash.stat3sub'), Icon: BookOpen, color: "#16a34a", bg: "#f0fdf4" },
-  ];
-
-  const [pricing, setPricing] = useState("₹300/visit");
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempPrice, setTempPrice] = useState(pricing);
-  const [toast, setToast] = useState("");
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
-
+  // SUPABASE REALTIME PRESENCE (EPHEMERAL STATE)
   useEffect(() => {
-    fetch('/api/workers/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setWorker(data.worker);
-          setPricing(data.worker.priceRate || "₹300/visit");
-        }
-        setLoading(false);
-      });
-  }, []);
+    if (!isOnline) return;
+    
+    const supabase = createClient();
+    const channel = supabase.channel('public:locations');
+    
+    channel.on('presence', { event: 'sync' }, () => {
+      console.log('Synced presence state');
+    }).subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        // Mock geolocation ping every 5 seconds, skipping expensive Postgres writes
+        const interval = setInterval(async () => {
+          await channel.track({
+            worker_id: 'worker-123',
+            lat: 19.0760 + (Math.random() * 0.001),
+            lng: 72.8777 + (Math.random() * 0.001),
+            timestamp: new Date().toISOString()
+          });
+        }, 5000);
+        return () => clearInterval(interval);
+      }
+    });
 
-  const toggleVisibility = async () => {
-    if (!worker) return;
-    const newStatus = !worker.isProfilePublic;
-    setWorker({ ...worker, isProfilePublic: newStatus });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOnline]);
+
+  const handleCameraOverride = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setIsUploadingOverride(true);
+    
+    const formData = new FormData();
+    formData.append('file', e.target.files[0]);
+    formData.append('bookingId', 'mock-booking-id-123'); // Mock ID
+    
     try {
-      const res = await fetch('/api/workers/me', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isProfilePublic: newStatus })
+      const res = await fetch('/api/bookings/override', {
+        method: 'POST',
+        body: formData
       });
       if (res.ok) {
-        showToast(newStatus ? 'Profile is now Visible' : 'Profile Hidden');
+        setBookingState('IN_PROGRESS');
+      } else {
+        alert('Failed to override. Please try again.');
       }
-    } catch {}
+    } catch (error) {
+      alert('Error uploading visual proof.');
+    } finally {
+      setIsUploadingOverride(false);
+    }
   };
 
-  const savePrice = async (newPrice: string) => {
-    setPricing(newPrice);
-    setIsEditing(false);
-    try {
-      const res = await fetch('/api/workers/me', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceRate: newPrice })
-      });
-      if (res.ok) showToast('Pricing Updated!');
-    } catch {}
+  // Timer logic for incoming request
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (bookingState === 'RINGING' && timer > 0) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    } else if (timer === 0 && bookingState === 'RINGING') {
+      setBookingState('IDLE');
+      setTimer(15);
+    }
+    return () => clearInterval(interval);
+  }, [bookingState, timer]);
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
+    
+    // Verify OTP if complete
+    if (index === 3 && value && newOtp.every(v => v !== '')) {
+      if (newOtp.join('') === '4829') {
+        setBookingState('IN_PROGRESS');
+      } else {
+        alert('Invalid Service PIN');
+      }
+    }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
-  if (!worker) return <div style={{ padding: 40, textAlign: 'center' }}>Not logged in</div>;
-
+  const triggerMockGig = () => {
+    setTimer(15);
+    setBookingState('RINGING');
+  };
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 60 }}>
-
-      {/* Indigo top banner */}
-      <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', padding: '32px 24px 80px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.1em', marginBottom: 6 }}>WORKER DASHBOARD</p>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.025em', marginBottom: 4 }}>{t('dash.hello')} {worker.name.split(' ')[0]} 👋</h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>{t('dash.subtitle')}</p>
-          </div>
-          <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: 10, cursor: 'pointer', color: '#fff' }}>
-            <Bell size={20} />
-          </button>
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+      {/* HEADER */}
+      <header className="bg-white px-6 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm relative z-10">
+        <div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight">SahiSeva <span className="text-indigo-600">Pro</span></h1>
+          <p className="text-xs font-bold text-slate-500 mt-1">Sunil M. • Plumber</p>
         </div>
-      </div>
+        
+        <button 
+          onClick={() => setIsOnline(!isOnline)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all shadow-md ${isOnline ? 'bg-emerald-500 shadow-emerald-500/30' : 'bg-slate-400'}`}
+        >
+          <Power size={18} />
+          {isOnline ? 'ONLINE' : 'GO ONLINE'}
+        </button>
+      </header>
 
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 24px', marginTop: -48, position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Pending Verification Banner */}
-        {worker.status === 'PENDING' && (
-          <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <div style={{ color: '#d97706', marginTop: 2 }}><ShieldCheck size={24} /></div>
-            <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#b45309', marginBottom: 4 }}>Profile Review in Progress</h3>
-              <p style={{ fontSize: 13, color: '#d97706', lineHeight: 1.5 }}>
-                Your identity verification is currently being processed by our team. You can setup your profile, but you will not appear in public search results until approved.
-              </p>
-            </div>
+      {/* MAIN MAP AREA (MOCK) */}
+      <main className="flex-grow relative bg-slate-200 overflow-hidden">
+        {/* Mock Map Background */}
+        <div className="absolute inset-0 z-0">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120668.64790757237!2d72.82728952445831!3d19.06822838421882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1709214013149!5m2!1sen!2sin"
+            width="100%"
+            height="100%"
+            style={{ border: 0, opacity: 0.85, pointerEvents: 'none', filter: 'grayscale(15%) contrast(110%) brightness(110%)' }}
+            allowFullScreen={false}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+          <div className="absolute inset-0 bg-indigo-900/10 mix-blend-multiply pointer-events-none"></div>
+        </div>
+        
+        {bookingState === 'IDLE' && (
+          <div className="absolute bottom-6 left-4 right-4 bg-white rounded-xl p-4 shadow-lg border border-slate-200 text-center">
+            {isOnline ? (
+              <>
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <MapPin className="text-emerald-600" size={24} />
+                </div>
+                <h3 className="font-bold text-slate-900">You are Online</h3>
+                <p className="text-sm text-slate-500 mb-4">Searching for nearby service requests...</p>
+                <button onClick={triggerMockGig} className="text-xs text-indigo-600 underline">Simulate Incoming Request (Dev Mode)</button>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Power className="text-slate-400" size={24} />
+                </div>
+                <h3 className="font-bold text-slate-900">You are Offline</h3>
+                <p className="text-sm text-slate-500">Go online to receive jobs.</p>
+              </>
+            )}
           </div>
         )}
 
-        {/* Profile card */}
-        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #e2e8f0', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', padding: '24px 28px', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 16, overflow: 'hidden', border: '3px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-              <Image src="https://i.pravatar.cc/150?u=ramesh" alt="Profile" fill style={{ objectFit: 'cover' }} />
-            </div>
-            <div style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: '#16a34a', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Check size={11} color="white" />
-            </div>
-          </div>
-
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>{worker.name}</h2>
-              {worker.verified && <ShieldCheck size={17} color="#16a34a" />}
-            </div>
-            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>{t(`cat.${worker.category}`)} · ID: WRK-{worker.id.substring(worker.id.length - 5).toUpperCase()}</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {[{ l: t('dash.badge1'), c: '#16a34a', bg: '#f0fdf4' }, { l: t('dash.badge2'), c: '#d97706', bg: '#fffbeb' }, { l: t('dash.badge3'), c: '#4f46e5', bg: '#eef2ff' }]
-                .map(b => <span key={b.l} style={{ fontSize: 12, fontWeight: 700, color: b.c, background: b.bg, padding: '3px 10px', borderRadius: 9999 }}>{b.l}</span>)}
-            </div>
-          </div>
-
-          {/* Trust score */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 24px', textAlign: 'center', minWidth: 100 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', marginBottom: 4 }}>{t('dash.trust')}</p>
-            <p style={{ fontSize: '2.4rem', fontWeight: 900, color: '#4f46e5', letterSpacing: '-0.04em', lineHeight: 1 }}>{worker.trustScore}</p>
-            <p style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center', marginTop: 6 }}>
-              <TrendingUp size={11} /> Top 5%
-            </p>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-          {STATS.map(s => (
-            <div key={s.label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, color: s.color }}>
-                <s.Icon size={18} />
+        {/* ACTIVE GIG UI */}
+        {(bookingState === 'ACCEPTED' || bookingState === 'ARRIVED') && (
+          <div className="absolute top-4 left-4 right-4 bg-indigo-900 text-white rounded-xl p-4 shadow-xl z-10">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Current Gig</p>
+                <h3 className="font-bold text-lg">Fix Leaking Pipe</h3>
               </div>
-              <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</p>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>{s.label}</p>
-              <p style={{ fontSize: 11, color: s.color, fontWeight: 700, marginTop: 5 }}>{s.sub}</p>
+              <div className="text-right">
+                <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Est. Payout</p>
+                <h3 className="font-bold text-lg text-emerald-400">₹450</h3>
+              </div>
             </div>
-          ))}
-        </div>
-
-        {/* Bottom row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-
-          {/* Pricing */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{t('dash.pricingTitle')}</h3>
-              <button onClick={() => { setTempPrice(pricing); setIsEditing(!isEditing); }}
-                style={{ background: isEditing ? '#eef2ff' : '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 7, cursor: 'pointer', color: isEditing ? '#4f46e5' : '#64748b' }}>
-                <Edit3 size={15} />
-              </button>
-            </div>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '18px 20px' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.06em', marginBottom: 8 }}>{t('dash.currentRate')}</p>
-              {isEditing ? (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={tempPrice} onChange={e => setTempPrice(e.target.value)} className="input"
-                    style={{ fontSize: '1rem', fontWeight: 700 }} autoFocus />
-                  <button onClick={() => savePrice(tempPrice)} style={{ background: '#16a34a', border: 'none', borderRadius: 8, padding: '0 12px', cursor: 'pointer', color: '#fff' }}><Check size={15} /></button>
-                  <button onClick={() => setIsEditing(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, padding: '0 10px', cursor: 'pointer', color: '#64748b' }}><X size={15} /></button>
-                </div>
-              ) : (
-                <p style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{pricing}</p>
-              )}
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 10, lineHeight: 1.5 }}>
-                {t('dash.pricingDesc')}
-              </p>
-            </div>
-          </div>
-
-          {/* Quick actions & Profile Toggle */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 18 }}>{t('dash.quick')}</h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Profile Toggle */}
-              <button
-                onClick={toggleVisibility}
-                style={{ 
-                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderRadius: 10, 
-                  border: `1px solid ${worker.isProfilePublic ? '#16a34a' : '#ef4444'}`, 
-                  background: worker.isProfilePublic ? '#f0fdf4' : '#fef2f2', 
-                  color: worker.isProfilePublic ? '#16a34a' : '#ef4444', 
-                  fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' 
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Power size={18} /> {worker.isProfilePublic ? 'Profile is Visible (ON)' : 'Profile is Hidden (OFF)'}
-                </div>
-                {worker.isProfilePublic ? <Check size={16} /> : <X size={16} />}
-              </button>
-
-              {[
-                { l: t('dash.action1'), c: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe', msg: t('dash.toast1') },
-                { l: t('dash.action2'), c: '#475569', bg: '#f8fafc', border: '#e2e8f0', msg: t('dash.toast2') },
-              ].map(a => (
-                <button
-                  key={a.l}
-                  onClick={() => showToast(a.msg)}
-                  style={{ width: '100%', textAlign: 'left', padding: '11px 14px', borderRadius: 10, border: `1px solid ${a.border}`, background: a.bg, color: a.c, fontWeight: 600, fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateX(3px)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateX(0)'; }}
-                >
-                  {a.l} →
-                </button>
-              ))}
+            <div className="bg-indigo-950 rounded-lg p-3 flex items-center gap-3 mb-4 border border-indigo-800">
+              <Navigation className="text-indigo-300" size={20} />
+              <div>
+                <p className="text-sm font-medium">B-402, Shivam Apartments</p>
+                <p className="text-xs text-indigo-300">2.4 km away • 8 mins drive</p>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Premium Toast Notification */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)',
-          background: '#0f172a', color: '#fff', padding: '12px 24px', borderRadius: 9999,
-          fontSize: 14, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-          animation: 'fadeUp 0.3s ease both', zIndex: 100, display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          ✨ {toast}
-        </div>
-      )}
+            {bookingState === 'ACCEPTED' ? (
+              <button 
+                onClick={() => setBookingState('ARRIVED')}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-lg shadow-md transition-colors text-center"
+              >
+                I HAVE ARRIVED
+              </button>
+            ) : (
+              <div className="bg-white text-slate-900 rounded-lg p-4 text-center mt-2 shadow-inner">
+                <ShieldCheck className="mx-auto text-indigo-600 mb-2" size={28} />
+                <h4 className="font-bold text-lg mb-1">Service Handshake</h4>
+                <p className="text-sm text-slate-500 mb-4">Ask the customer for their 4-digit PIN to start.</p>
+                <div className="flex gap-2 justify-center mb-4">
+                  {[0,1,2,3].map((i) => (
+                    <input 
+                      key={i}
+                      type="text"
+                      maxLength={1}
+                      className="w-12 h-12 text-center font-mono text-xl font-bold bg-slate-50 border border-slate-300 rounded-md focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
+                      onChange={(e) => {
+                        const newOtp = [...otp];
+                        newOtp[i] = e.target.value;
+                        setOtp(newOtp);
+                        if (e.target.value && i < 3) {
+                          const nextInput = e.target.parentElement?.children[i+1] as HTMLInputElement;
+                          if (nextInput) nextInput.focus();
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setBookingState('IN_PROGRESS')}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] mb-3"
+                >
+                  VERIFY & START JOB
+                </button>
+                
+                {/* OFFLINE OVERRIDE */}
+                <div className="border-t border-slate-200 pt-3 relative">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-2 text-xs text-slate-400 font-bold uppercase">OR</span>
+                  <label className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition-colors cursor-pointer border border-slate-300 border-dashed">
+                    <Camera size={18} />
+                    Customer Offline / Camera Override
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      className="hidden" 
+                      onChange={handleCameraOverride}
+                    />
+                  </label>
+                  {isUploadingOverride && <p className="text-xs text-indigo-600 mt-2 font-bold animate-pulse">Uploading visual proof & overriding...</p>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* IN_PROGRESS UI */}
+        {bookingState === 'IN_PROGRESS' && (
+          <div className="absolute bottom-6 left-4 right-4 bg-white rounded-xl p-6 shadow-xl border-t-4 border-emerald-500 text-center z-10">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="text-emerald-600" size={32} />
+            </div>
+            <h3 className="font-bold text-2xl text-slate-900 mb-2">Job in Progress</h3>
+            <p className="text-slate-500 mb-6">Timer started. Complete the job to generate the final bill.</p>
+            <button 
+              onClick={() => { setBookingState('IDLE'); setIsOnline(false); }}
+              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-lg shadow-md transition-colors"
+            >
+              FINISH & COLLECT CASH
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* INCOMING REQUEST MODAL (FRAMER MOTION) */}
+      <AnimatePresence>
+        {bookingState === 'RINGING' && (
+          <motion.div 
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-50 bg-slate-900 flex flex-col"
+          >
+            {/* Pulsing Map Header */}
+            <div className="relative h-[40%] bg-slate-800 overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 z-0">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120668.64790757237!2d72.82728952445831!3d19.06822838421882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1709214013149!5m2!1sen!2sin"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, opacity: 0.6, pointerEvents: 'none', filter: 'grayscale(30%) contrast(120%) brightness(80%)' }}
+                  allowFullScreen={false}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+                <div className="absolute inset-0 bg-indigo-900/30 mix-blend-multiply pointer-events-none"></div>
+              </div>
+              
+              {/* Radar Rings */}
+              <div className="absolute w-32 h-32 border-2 border-indigo-500 rounded-full opacity-50 animate-ping"></div>
+              <div className="absolute w-64 h-64 border border-indigo-500 rounded-full opacity-25 animate-ping" style={{ animationDelay: '0.5s' }}></div>
+              
+              <div className="relative z-10 bg-indigo-600 text-white rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.8)] border-4 border-indigo-900">
+                <span className="font-bold text-2xl">{timer}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Secs</span>
+              </div>
+            </div>
+
+            {/* Request Details */}
+            <div className="flex-grow bg-white rounded-t-3xl -mt-6 relative z-20 p-6 flex flex-col">
+              <div className="text-center mb-6">
+                <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full uppercase tracking-widest mb-3">New Request</span>
+                <h2 className="text-3xl font-bold text-slate-900">Plumbing Repair</h2>
+              </div>
+              
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-6 space-y-4 shadow-sm">
+                <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-200 p-2 rounded-lg text-slate-600"><MapPin size={20} /></div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Distance</p>
+                      <p className="font-bold text-slate-900">2.4 km (8 mins)</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald-100 p-2 rounded-lg text-emerald-700 font-bold">₹</div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Est. Earnings</p>
+                      <p className="font-bold text-2xl text-slate-900">₹450</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-auto grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setBookingState('IDLE')}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-4 rounded-xl text-lg transition-colors"
+                >
+                  REJECT
+                </button>
+                <button 
+                  onClick={() => setBookingState('ACCEPTED')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-colors"
+                >
+                  ACCEPT
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
