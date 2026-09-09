@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await params;
-    const bookingId = resolvedParams.id;
+    const { id } = await context.params;
+    const bookingId = id;
     const body = await request.json();
     const { subtotal, paymentMethod, paymentRef } = body;
 
