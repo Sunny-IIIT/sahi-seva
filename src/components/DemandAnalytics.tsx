@@ -78,7 +78,7 @@ export default function DemandAnalytics() {
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                 labelLine={false}
               >
                 {data.serviceDistribution.map((entry, index) => (

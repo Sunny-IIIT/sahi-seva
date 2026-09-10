@@ -12,8 +12,7 @@ export default function VoiceSearchBar() {
 
   useEffect(() => {
     // Initialize Web Speech API (SpeechRecognition)
-    // TypeScript workaround for browser implementations
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();

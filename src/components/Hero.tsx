@@ -36,7 +36,7 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
       recog.continuous = false;
