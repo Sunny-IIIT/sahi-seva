@@ -9,22 +9,21 @@ import { useLanguage, Lang } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/client';
 
 const CUSTOMER_NAV = [
-  { label: 'Home', href: '/', icon: Home },
-  { label: 'Explore', href: '/search', icon: Search },
-  { label: 'Book', href: '/customer/book', icon: PlusCircle },
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'nav.home', href: '/', icon: Home },
+  { label: 'nav.book', href: '/customer/book', icon: PlusCircle },
+  { label: 'nav.profile', href: '/profile', icon: User },
 ];
 
 const WORKER_NAV = [
-  { label: 'Dashboard', href: '/worker/dashboard', icon: Briefcase },
-  { label: 'Benefits', href: '/worker/benefits', icon: HeartHandshake },
-  { label: 'Verification', href: '/worker/training', icon: Award },
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'nav.dashboard', href: '/worker/dashboard', icon: Briefcase },
+  { label: 'nav.benefits', href: '/worker/benefits', icon: HeartHandshake },
+  { label: 'nav.verification', href: '/worker/training', icon: Award },
+  { label: 'nav.profile', href: '/profile', icon: User },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   
@@ -73,7 +72,7 @@ export function Navigation() {
                 )}
               </div>
               <span className={`text-[10px] mt-1 font-medium ${isActive ? 'font-bold' : ''}`}>
-                {item.label}
+                {t(item.label)}
               </span>
             </Link>
           );
@@ -101,7 +100,7 @@ export function Navigation() {
                 }`}
               >
                 <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
-                {item.label}
+                {t(item.label)}
               </Link>
             );
           })}
@@ -115,7 +114,7 @@ export function Navigation() {
               className="flex items-center gap-4 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium rounded-xl transition-colors"
             >
               <UserPlus size={20} className="text-slate-400" />
-              Join as Worker
+              {t("nav.join")}
             </Link>
           )}
 
@@ -150,7 +149,7 @@ export function Navigation() {
               className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors w-full text-center shadow-md shadow-indigo-200"
             >
               <LogIn size={20} />
-              Sign In
+              {t("nav.signin")}
             </Link>
           )}
         </div>
