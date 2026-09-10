@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       // Update Booking to CONFIRMED
       await prisma.booking.update({
         where: { id: pendingBooking.id },
-        data: { status: 'CONFIRMED' }
+        data: { status: 'ACCEPTED' }
       });
 
       // (Optional) Here you would use the Twilio client to send an SMS to the customer:
