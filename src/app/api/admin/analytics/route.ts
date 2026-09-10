@@ -38,8 +38,10 @@ export async function GET(request: Request) {
     // 2. Calculate Service Distribution
     const serviceMap: Record<string, number> = {};
     recentBookings.forEach(booking => {
-      const category = booking.worker.category;
-      serviceMap[category] = (serviceMap[category] || 0) + 1;
+      if (booking.worker && booking.worker.category) {
+        const category = booking.worker.category;
+        serviceMap[category] = (serviceMap[category] || 0) + 1;
+      }
     });
 
     const serviceDistribution = Object.keys(serviceMap)

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
     }
 
-    if (booking.status !== 'PENDING' && booking.status !== 'ACCEPTED') {
+    if (booking.status !== 'SEARCHING' && booking.status !== 'ACCEPTED' && booking.status !== 'ARRIVED') {
       return NextResponse.json({ success: false, error: 'Booking is not in a startable state' }, { status: 400 });
     }
 

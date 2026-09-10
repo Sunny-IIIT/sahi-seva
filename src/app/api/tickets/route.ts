@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         bookingId,
         customerId: customerId || null,
         workerId: workerId || null,
-        subject,
+        issueType: subject,
         description,
         status: 'OPEN'
       }

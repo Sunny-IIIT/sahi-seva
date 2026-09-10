@@ -31,7 +31,9 @@ export async function GET(request: Request) {
     const demandMap: Record<string, Record<string, number>> = {};
 
     recentBookings.forEach(booking => {
-      const pin = booking.pinCode!;
+      if (!booking.pinCode || !booking.worker || !booking.worker.category) return;
+      
+      const pin = booking.pinCode;
       const cat = booking.worker.category;
       
       if (!demandMap[pin]) demandMap[pin] = {};

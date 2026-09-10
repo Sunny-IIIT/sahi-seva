@@ -63,20 +63,22 @@ export async function POST(
       });
 
       // 3. Update Worker Welfare and Earnings records
-      await tx.worker.update({
-        where: { id: booking.workerId },
-        data: {
-          welfareBalance: {
-            increment: welfareFeeDeducted
-          },
-          totalEarnings: {
-            increment: subtotal // Subtotal is what the worker nominally earns before deductions
-          },
-          jobsDone: {
-            increment: 1
+      if (booking.workerId) {
+        await tx.worker.update({
+          where: { id: booking.workerId },
+          data: {
+            welfareBalance: {
+              increment: welfareFeeDeducted
+            },
+            totalEarnings: {
+              increment: subtotal // Subtotal is what the worker nominally earns before deductions
+            },
+            jobsDone: {
+              increment: 1
+            }
           }
-        }
-      });
+        });
+      }
 
       return invoice;
     });
