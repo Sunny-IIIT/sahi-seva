@@ -24,7 +24,7 @@ export default async function SocietyAdminDashboard() {
   let govtCertifiedCount = 0;
 
   society.workers.forEach(w => {
-    totalWelfareFund += w.welfareFundContribution;
+    totalWelfareFund += w.welfareBalance || 0;
     if (w.isGovtCertified) govtCertifiedCount++;
   });
 

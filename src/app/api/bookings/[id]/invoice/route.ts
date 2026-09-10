@@ -66,7 +66,7 @@ export async function POST(
       await tx.worker.update({
         where: { id: booking.workerId },
         data: {
-          welfareFundContribution: {
+          welfareBalance: {
             increment: welfareFeeDeducted
           },
           totalEarnings: {
