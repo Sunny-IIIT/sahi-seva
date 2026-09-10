@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const pendingBooking = await prisma.booking.findFirst({
       where: {
         workerId: worker.id,
-        status: 'PENDING'
+        status: 'SEARCHING'
       },
       orderBy: {
         createdAt: 'desc'

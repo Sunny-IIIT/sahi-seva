@@ -19,7 +19,7 @@ const MOCK_BOOKINGS = [
     service: 'Electrician',
     workerName: 'Amit Singh',
     date: '18 Oct 2026',
-    status: 'PENDING',
+    status: 'SEARCHING',
     amount: 0,
   }
 ];
