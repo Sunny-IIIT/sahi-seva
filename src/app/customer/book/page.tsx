@@ -22,6 +22,10 @@ function CustomerBookContent() {
     let timeout: NodeJS.Timeout;
     if (bookingState === 'SEARCHING') {
       timeout = setTimeout(() => setBookingState('MATCHED'), 3000);
+    } else if (bookingState === 'MATCHED') {
+      timeout = setTimeout(() => setBookingState('IN_PROGRESS'), 4000);
+    } else if (bookingState === 'IN_PROGRESS') {
+      timeout = setTimeout(() => setBookingState('COMPLETED'), 4000);
     }
     return () => clearTimeout(timeout);
   }, [bookingState]);
@@ -177,12 +181,6 @@ function CustomerBookContent() {
                 <p className="text-sm text-indigo-700 mt-2 font-medium relative z-10">Share this PIN when the worker arrives</p>
               </div>
 
-              <button 
-                onClick={() => setBookingState('IN_PROGRESS')}
-                className="w-full text-slate-500 text-sm font-bold py-2 underline"
-              >
-                [Dev] Simulate Arrival & Start
-              </button>
             </motion.div>
           )}
 
@@ -198,13 +196,6 @@ function CustomerBookContent() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">Service in Progress</h2>
               <p className="text-slate-500 font-medium mb-6">{worker.name} is currently working on your request.</p>
-              
-              <button 
-                onClick={() => setBookingState('COMPLETED')}
-                className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-lg shadow-md hover:bg-black transition-colors"
-              >
-                [Dev] Simulate Job Completion
-              </button>
             </motion.div>
           )}
 
